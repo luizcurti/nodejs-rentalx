@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+  "module": "commonjs",
+    "target": "ES6",
+    "rootDir": "./",
+    "baseUrl": "./src",
+    "outDir": "./dist",
+    "paths": {
+      "@modules/*": ["modules/*"],
+      "@config/*": ["config/*"],
+      "@shared/*": ["shared/*"],
+      "@errors/*": ["errors/*"],
+      "@utils/*": ["utils/*"]
+    },
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "types": ["node", "express", "jest"]
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!mime/)"
+    ]
+  }
+}
