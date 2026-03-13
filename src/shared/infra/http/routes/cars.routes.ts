@@ -23,16 +23,16 @@ carsRoutes.post(
   "/",
   ensureAuthenticated,
   ensureAdmin,
-  createCarController.handle
+  (req, res) => createCarController.handle(req, res)
 );
 
-carsRoutes.get("/available", listAvailableCarsController.handle);
+carsRoutes.get("/available", (req, res) => listAvailableCarsController.handle(req, res));
 
 carsRoutes.post(
   "/specifications/:id",
   ensureAuthenticated,
   ensureAdmin,
-  createCarSpecificationController.handle
+  (req, res) => createCarSpecificationController.handle(req, res)
 );
 
 carsRoutes.post(
@@ -40,7 +40,7 @@ carsRoutes.post(
   ensureAuthenticated,
   ensureAdmin,
   upload.array("images"),
-  uploadCarImagesController.handle
+  (req, res) => uploadCarImagesController.handle(req, res)
 );
 
 export { carsRoutes };

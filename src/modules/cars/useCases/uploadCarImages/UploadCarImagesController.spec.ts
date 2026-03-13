@@ -21,15 +21,16 @@ describe("UploadCarImagesController (unit)", () => {
       carsImagesRepositoryInMemory,
       storageProviderInMemory
     );
-    controller = new UploadCarImagesController();
 
-    // Mock container.resolve para retornar nosso useCase real com dependências in-memory
+    // Mock container.resolve antes de criar o controller
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === UploadCarImagesUseCase) {
         return useCase;
       }
       return undefined;
     });
+
+    controller = new UploadCarImagesController();
   });
 
   function mockRequest(): Partial<Request> {

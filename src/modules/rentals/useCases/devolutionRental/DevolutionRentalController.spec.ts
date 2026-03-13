@@ -21,9 +21,9 @@ describe("DevolutionRentalController (unit)", () => {
       })
     };
 
-    controller = new DevolutionRentalController();
+    jest.spyOn(container, "resolve").mockReturnValue(mockUseCase);
 
-  jest.spyOn(container, "resolve").mockReturnValue(mockUseCase);
+    controller = new DevolutionRentalController();
   });
 
   function mockRequest(params?: any, user?: any): Partial<Request> {

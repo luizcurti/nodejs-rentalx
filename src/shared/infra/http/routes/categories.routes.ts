@@ -20,17 +20,17 @@ categoriesRoutes.post(
   "/",
   ensureAuthenticated,
   ensureAdmin,
-  createCategoryController.handle
+  (req, res) => createCategoryController.handle(req, res)
 );
 
-categoriesRoutes.get("/", listCategoriesController.handle);
+categoriesRoutes.get("/", (req, res) => listCategoriesController.handle(req, res));
 
 categoriesRoutes.post(
   "/import",
   ensureAuthenticated,
   ensureAdmin,
   upload.single("file"),
-  importCategoryController.handle
+  (req, res) => importCategoryController.handle(req, res)
 );
 
 export { categoriesRoutes };

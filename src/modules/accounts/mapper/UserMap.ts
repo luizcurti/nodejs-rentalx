@@ -3,23 +3,17 @@ import { IUserResponseDTO } from "../dtos/IUserResponseDTO";
 import { User } from "../infra/typeorm/entities/User";
 
 class UserMap {
-  static toDTO({
-    email,
-    name,
-    id,
-    avatar,
-    driver_license,
-    avatar_url,
-  }: User): IUserResponseDTO {
-    const user = instanceToInstance({
+  static toDTO(user: User): IUserResponseDTO {
+    const { email, name, id, avatar, driver_license } = user;
+    const result = instanceToInstance({
       email: email ?? "",
       name: name ?? "",
       id,
       avatar: avatar ?? "",
       driver_license: driver_license ?? "",
-      avatar_url,
+      avatar_url: user.avatar_url(),
     });
-    return user as IUserResponseDTO;
+    return result as IUserResponseDTO;
   }
 }
 

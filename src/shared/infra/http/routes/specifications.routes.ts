@@ -14,9 +14,9 @@ specificationsRoutes.post(
   "/",
   ensureAuthenticated,
   ensureAdmin,
-  createSpecificationController.handle
+  (req, res) => createSpecificationController.handle(req, res)
 );
 
-specificationsRoutes.get("/", listSpecificationsController.handle);
+specificationsRoutes.get("/", (req, res) => listSpecificationsController.handle(req, res));
 
 export { specificationsRoutes };

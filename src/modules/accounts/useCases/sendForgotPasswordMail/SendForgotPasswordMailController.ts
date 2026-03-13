@@ -1,13 +1,15 @@
 import "reflect-metadata";
 import { Request, Response } from "express";
+import { container } from "tsyringe";
 
 import { SendForgotPasswordMailUseCase } from "./SendForgotPasswordMailUseCase";
 
 class SendForgotPasswordMailController {
-  private sendForgotPasswordMailUseCase?: SendForgotPasswordMailUseCase;
+  private sendForgotPasswordMailUseCase: SendForgotPasswordMailUseCase;
 
   constructor(sendForgotPasswordMailUseCase?: SendForgotPasswordMailUseCase) {
-    this.sendForgotPasswordMailUseCase = sendForgotPasswordMailUseCase;
+    this.sendForgotPasswordMailUseCase =
+      sendForgotPasswordMailUseCase ?? container.resolve(SendForgotPasswordMailUseCase);
   }
 
   setUseCase(useCase: SendForgotPasswordMailUseCase) {
@@ -16,12 +18,7 @@ class SendForgotPasswordMailController {
 
   async handle(request: Request, response: Response): Promise<Response> {
     const { email } = request.body;
-    let useCase = this.sendForgotPasswordMailUseCase;
-    if (!useCase) {
-      const { container } = await import("tsyringe");
-      useCase = container.resolve(SendForgotPasswordMailUseCase);
-    }
-    await useCase.execute(email);
+    await this.sendForgotPasswordMailUseCase.execute(email);
     return response.send();
   }
 }

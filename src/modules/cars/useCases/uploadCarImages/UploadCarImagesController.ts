@@ -8,15 +8,19 @@ interface IFiles {
 }
 
 class UploadCarImagesController {
+  private uploadCarImagesUseCase: UploadCarImagesUseCase;
+
+  constructor(uploadCarImagesUseCase?: UploadCarImagesUseCase) {
+    this.uploadCarImagesUseCase = uploadCarImagesUseCase ?? container.resolve(UploadCarImagesUseCase);
+  }
+
   async handle(request: Request, response: Response): Promise<Response> {
     const { id } = request.params;
     const images = request.files as IFiles[];
 
-    const uploadCarImagesUseCase = container.resolve(UploadCarImagesUseCase);
-
     const images_name = images.map((file) => file.filename);
 
-    await uploadCarImagesUseCase.execute({
+    await this.uploadCarImagesUseCase.execute({
       car_id: id,
       images_name,
     });

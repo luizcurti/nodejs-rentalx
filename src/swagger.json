@@ -2,12 +2,588 @@
   "openapi": "3.0.0",
   "info": {
     "title": "RentX Documentation",
-    "description": "This is an API Rent",
+    "description": "API para aluguel de carros",
     "version": "1.0.0",
     "contact": {
-      "email":"luiz.curti@gmail.com"
+      "email": "luiz.curti@gmail.com"
     }
   },
+  "paths": {
+    "/sessions": {
+      "post": {
+        "tags": ["Session"],
+        "summary": "Autenticar usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "admin@rentalx.com" },
+                  "password": { "type": "string", "example": "admin" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autenticado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "email": { "type": "string" }
+                      }
+                    },
+                    "token": { "type": "string" },
+                    "refresh_token": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Email ou senha incorretos" }
+        }
+      }
+    },
+    "/refresh-token": {
+      "post": {
+        "tags": ["Session"],
+        "summary": "Renovar token de acesso",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token renovado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "refresh_token": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Refresh token inválido ou expirado" }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Criar usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/definitions/CreateUser" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Usuário criado" },
+          "400": { "description": "Usuário já existe" }
+        }
+      }
+    },
+    "/users/profile": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Retornar perfil do usuário autenticado",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Perfil do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string" },
+                    "driver_license": { "type": "string" },
+                    "avatar": { "type": "string" },
+                    "avatar_url": { "type": "string", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" },
+          "404": { "description": "Usuário não encontrado" }
+        }
+      }
+    },
+    "/users/avatar": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Atualizar avatar do usuário",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Avatar atualizado" },
+          "400": { "description": "Arquivo não enviado" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/password/forgot": {
+      "post": {
+        "tags": ["Password"],
+        "summary": "Enviar e-mail de recuperação de senha",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "example": "user@example.com" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "E-mail enviado (ou ignorado silenciosamente se e-mail não cadastrado)" }
+        }
+      }
+    },
+    "/password/reset": {
+      "post": {
+        "tags": ["Password"],
+        "summary": "Redefinir senha",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password"],
+                "properties": {
+                  "password": { "type": "string", "example": "novaSenha123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Senha redefinida com sucesso" },
+          "400": { "description": "Token inválido ou expirado" }
+        }
+      }
+    },
+    "/categories": {
+      "post": {
+        "tags": ["Category"],
+        "summary": "Criar categoria",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "description"],
+                "properties": {
+                  "name": { "type": "string", "example": "SUV" },
+                  "description": { "type": "string", "example": "Categoria SUV" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Categoria criada" },
+          "400": { "description": "Categoria já existe" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão (não é admin)" }
+        }
+      },
+      "get": {
+        "tags": ["Category"],
+        "summary": "Listar categorias",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de categorias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "description": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/import": {
+      "post": {
+        "tags": ["Category"],
+        "summary": "Importar categorias via CSV",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Categorias importadas" },
+          "400": { "description": "Arquivo não enviado" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão" }
+        }
+      }
+    },
+    "/specifications": {
+      "post": {
+        "tags": ["Specifications"],
+        "summary": "Criar especificação",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/definitions/Specification" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Especificação criada" },
+          "400": { "description": "Especificação já existe" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão" }
+        }
+      },
+      "get": {
+        "tags": ["Specifications"],
+        "summary": "Listar especificações",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de especificações",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/definitions/Specification" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cars": {
+      "post": {
+        "tags": ["Cars"],
+        "summary": "Criar carro",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/definitions/Car" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Carro criado", "content": { "application/json": { "schema": { "$ref": "#/definitions/CarResponse" } } } },
+          "400": { "description": "Carro já existe (placa duplicada)" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão" }
+        }
+      }
+    },
+    "/cars/available": {
+      "get": {
+        "tags": ["Cars"],
+        "summary": "Listar carros disponíveis",
+        "parameters": [
+          { "name": "brand", "in": "query", "schema": { "type": "string" } },
+          { "name": "name", "in": "query", "schema": { "type": "string" } },
+          { "name": "category_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de carros disponíveis",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/definitions/CarResponse" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cars/specifications/{id}": {
+      "post": {
+        "tags": ["Cars"],
+        "summary": "Adicionar especificações a um carro",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["specifications_id"],
+                "properties": {
+                  "specifications_id": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "example": ["uuid-spec-1", "uuid-spec-2"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Especificações adicionadas", "content": { "application/json": { "schema": { "$ref": "#/definitions/CarResponse" } } } },
+          "400": { "description": "Carro não encontrado" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão" }
+        }
+      }
+    },
+    "/cars/images/{id}": {
+      "post": {
+        "tags": ["Cars"],
+        "summary": "Fazer upload de imagens do carro",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Imagens enviadas" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão" }
+        }
+      }
+    },
+    "/rentals": {
+      "post": {
+        "tags": ["Rentals"],
+        "summary": "Criar aluguel",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["car_id", "expected_return_date"],
+                "properties": {
+                  "car_id": { "type": "string", "example": "uuid-do-carro" },
+                  "expected_return_date": { "type": "string", "format": "date-time", "example": "2026-03-15T12:00:00Z" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Aluguel criado" },
+          "400": { "description": "Carro indisponível ou usuário já possui aluguel ativo" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/rentals/devolution/{id}": {
+      "patch": {
+        "tags": ["Rentals"],
+        "summary": "Devolver carro alugado",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Devolução realizada com total calculado" },
+          "400": { "description": "Aluguel não encontrado" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Aluguel não pertence ao usuário" }
+        }
+      }
+    },
+    "/rentals/user": {
+      "get": {
+        "tags": ["Rentals"],
+        "summary": "Listar aluguéis do usuário autenticado",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de aluguéis do usuário",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/definitions/RentalResponse" } }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CreateUser": {
+      "type": "object",
+      "required": ["name", "email", "password", "driver_license"],
+      "properties": {
+        "name": { "type": "string", "example": "João Silva" },
+        "email": { "type": "string", "example": "joao@email.com" },
+        "password": { "type": "string", "example": "senha123" },
+        "driver_license": { "type": "string", "example": "CNH-12345" }
+      }
+    },
+    "Specification": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string", "example": "Air Conditioning" },
+        "description": { "type": "string", "example": "Carro com ar-condicionado" }
+      }
+    },
+    "Car": {
+      "type": "object",
+      "required": ["name", "description", "daily_rate", "license_plate", "fine_amount", "brand", "category_id"],
+      "properties": {
+        "name": { "type": "string", "example": "Onix" },
+        "description": { "type": "string", "example": "Carro econômico" },
+        "daily_rate": { "type": "number", "example": 100 },
+        "license_plate": { "type": "string", "example": "ABC-1234" },
+        "fine_amount": { "type": "number", "example": 50 },
+        "brand": { "type": "string", "example": "Chevrolet" },
+        "category_id": { "type": "string", "example": "uuid-da-categoria" }
+      }
+    },
+    "CarResponse": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "daily_rate": { "type": "number" },
+        "available": { "type": "boolean" },
+        "license_plate": { "type": "string" },
+        "fine_amount": { "type": "number" },
+        "brand": { "type": "string" },
+        "category_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "RentalResponse": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "car_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "start_date": { "type": "string", "format": "date-time" },
+        "end_date": { "type": "string", "format": "date-time", "nullable": true },
+        "expected_return_date": { "type": "string", "format": "date-time" },
+        "total": { "type": "number", "nullable": true },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
+
   "paths": {
     "/categories": {
       "post": {

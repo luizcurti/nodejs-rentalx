@@ -2,138 +2,344 @@
   "info": {
     "_postman_id": "rentalx-api-collection",
     "name": "RentalX API",
-  "description": "Collection of requests to test the RentalX API.",
+    "description": "Collection completa da API RentalX",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-  "name": "Authentication",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"admin@rentalx.com\",\n  \"password\": \"admin\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/sessions",
-          "host": ["{{baseUrl}}"],
-          "path": ["sessions"]
-        }
-      },
-      "response": [
+      "name": "Auth",
+      "item": [
         {
-          "name": "Example response",
-          "originalRequest": {},
-          "status": "OK",
-          "code": 200,
-          "body": "{\n  \"user\": {\n    \"id\": \"uuid\",\n    \"name\": \"Admin\",\n    \"email\": \"admin@rentalx.com\"\n  },\n  \"token\": \"jwt_token\",\n  \"refresh_token\": \"jwt_refresh_token\"\n}"
+          "name": "POST /sessions — Autenticar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.environment.set('token', json.token);",
+                  "pm.environment.set('refresh_token', json.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@rentalx.com\",\n  \"password\": \"admin\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/sessions", "host": ["{{baseUrl}}"], "path": ["sessions"] }
+          }
+        },
+        {
+          "name": "POST /refresh-token — Renovar token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/refresh-token", "host": ["{{baseUrl}}"], "path": ["refresh-token"] }
+          }
         }
       ]
     },
     {
-  "name": "Create Category",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{token}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"SUV\",\n  \"description\": \"Categoria SUV\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/categories",
-          "host": ["{{baseUrl}}"],
-          "path": ["categories"]
-        }
-      },
-      "response": [
+      "name": "Users",
+      "item": [
         {
-          "name": "Example response",
-          "originalRequest": {},
-          "status": "Created",
-          "code": 201,
-          "body": "Category created successfully."
+          "name": "POST /users — Criar usuário",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João da Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"senha123\",\n  \"driver_license\": \"CNH-9999\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "GET /users/profile — Perfil do usuário",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users", "profile"] }
+          }
+        },
+        {
+          "name": "PATCH /users/avatar — Atualizar avatar",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "avatar", "type": "file", "src": "" }]
+            },
+            "url": { "raw": "{{baseUrl}}/users/avatar", "host": ["{{baseUrl}}"], "path": ["users", "avatar"] }
+          }
         }
       ]
     },
     {
-  "name": "List Categories",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/categories",
-          "host": ["{{baseUrl}}"],
-          "path": ["categories"]
-        }
-      },
-      "response": [
+      "name": "Password",
+      "item": [
         {
-          "name": "Example response",
-          "originalRequest": {},
-          "status": "OK",
-          "code": 200,
-          "body": "[\n  {\n    \"id\": \"uuid\",\n    \"name\": \"SUV\",\n    \"description\": \"SUV Category\"\n  }\n]"
+          "name": "POST /password/forgot — Enviar e-mail de recuperação",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joao@email.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/password/forgot", "host": ["{{baseUrl}}"], "path": ["password", "forgot"] }
+          }
+        },
+        {
+          "name": "POST /password/reset — Redefinir senha",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"novaSenha123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/password/reset?token={{reset_token}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["password", "reset"],
+              "query": [{ "key": "token", "value": "{{reset_token}}" }]
+            }
+          }
         }
       ]
     },
     {
-  "name": "Create Car",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{token}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Onix\",\n  \"description\": \"Carro econômico\",\n  \"daily_rate\": 100,\n  \"license_plate\": \"ABC-1234\",\n  \"fine_amount\": 50,\n  \"brand\": \"Chevrolet\",\n  \"category_id\": \"{{category_id}}\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/cars",
-          "host": ["{{baseUrl}}"],
-          "path": ["cars"]
-        }
-      },
-      "response": [
+      "name": "Categories",
+      "item": [
         {
-          "name": "Example response",
-          "originalRequest": {},
-          "status": "Created",
-          "code": 201,
-          "body": "Car created successfully."
+          "name": "POST /categories — Criar categoria",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"SUV\",\n  \"description\": \"Veículos SUV de grande porte\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "GET /categories — Listar categorias",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/categories?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /categories/import — Importar via CSV",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            },
+            "url": { "raw": "{{baseUrl}}/categories/import", "host": ["{{baseUrl}}"], "path": ["categories", "import"] }
+          }
         }
       ]
     },
     {
-  "name": "Send Forgot Password Email",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"usuario@teste.com\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/password/forgot",
-          "host": ["{{baseUrl}}"],
-          "path": ["password", "forgot"]
-        }
-      },
-      "response": [
+      "name": "Specifications",
+      "item": [
         {
-          "name": "Example response",
-          "originalRequest": {},
-          "status": "OK",
-          "code": 200,
-          "body": "Recovery email sent successfully."
+          "name": "POST /specifications — Criar especificação",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Air Conditioning\",\n  \"description\": \"Veículo com ar-condicionado\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/specifications", "host": ["{{baseUrl}}"], "path": ["specifications"] }
+          }
+        },
+        {
+          "name": "GET /specifications — Listar especificações",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/specifications?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["specifications"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cars",
+      "item": [
+        {
+          "name": "POST /cars — Criar carro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.environment.set('car_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Onix\",\n  \"description\": \"Carro econômico compacto\",\n  \"daily_rate\": 100,\n  \"license_plate\": \"ABC-1234\",\n  \"fine_amount\": 50,\n  \"brand\": \"Chevrolet\",\n  \"category_id\": \"{{category_id}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/cars", "host": ["{{baseUrl}}"], "path": ["cars"] }
+          }
+        },
+        {
+          "name": "GET /cars/available — Listar carros disponíveis",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/cars/available?brand=Chevrolet&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["cars", "available"],
+              "query": [
+                { "key": "brand", "value": "Chevrolet" },
+                { "key": "name", "value": "", "disabled": true },
+                { "key": "category_id", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /cars/specifications/:id — Adicionar especificações",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"specifications_id\": [\"{{specification_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars/specifications/{{car_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["cars", "specifications", "{{car_id}}"]
+            }
+          }
+        },
+        {
+          "name": "POST /cars/images/:id — Upload de imagens",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "images", "type": "file", "src": "" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars/images/{{car_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["cars", "images", "{{car_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rentals",
+      "item": [
+        {
+          "name": "POST /rentals — Criar aluguel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.environment.set('rental_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"car_id\": \"{{car_id}}\",\n  \"expected_return_date\": \"2026-03-16T12:00:00Z\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/rentals", "host": ["{{baseUrl}}"], "path": ["rentals"] }
+          }
+        },
+        {
+          "name": "PATCH /rentals/devolution/:id — Devolver carro",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/rentals/devolution/{{rental_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["rentals", "devolution", "{{rental_id}}"]
+            }
+          }
+        },
+        {
+          "name": "GET /rentals/user — Listar aluguéis do usuário",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/rentals/user?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["rentals", "user"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
         }
       ]
     }
@@ -141,6 +347,12 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3333" },
     { "key": "token", "value": "" },
-    { "key": "category_id", "value": "" }
+    { "key": "refresh_token", "value": "" },
+    { "key": "reset_token", "value": "" },
+    { "key": "category_id", "value": "" },
+    { "key": "car_id", "value": "" },
+    { "key": "specification_id", "value": "" },
+    { "key": "rental_id", "value": "" }
   ]
 }
+

@@ -4,15 +4,20 @@ import { container } from "tsyringe";
 import { ImportCategoryUseCase } from "./ImportCategoryUseCase";
 
 class ImportCategoryController {
+  private importCategoryUseCase: ImportCategoryUseCase;
+
+  constructor(importCategoryUseCase?: ImportCategoryUseCase) {
+    this.importCategoryUseCase = importCategoryUseCase ?? container.resolve(ImportCategoryUseCase);
+  }
+
   async handle(request: Request, response: Response): Promise<Response> {
     const { file } = request;
-
-    const importCategoryUseCase = container.resolve(ImportCategoryUseCase);
 
     if (!file) {
       return response.status(400).json({ error: "File is required" });
     }
-    await importCategoryUseCase.execute(file);
+
+    await this.importCategoryUseCase.execute(file);
 
     return response.status(201).send();
   }

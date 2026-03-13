@@ -13,15 +13,16 @@ describe("CreateSpecificationController (unit)", () => {
   beforeEach(() => {
     specificationsRepositoryInMemory = new SpecificationsRepositoryInMemory();
     useCase = new CreateSpecificationUseCase(specificationsRepositoryInMemory);
-    controller = new CreateSpecificationController();
 
-    // Mock container.resolve para retornar nosso use case real
+    // Mock container.resolve antes de criar o controller
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === CreateSpecificationUseCase) {
         return useCase;
       }
       return undefined;
     });
+
+    controller = new CreateSpecificationController();
   });
 
   function mockRequest(body?: any): Partial<Request> {

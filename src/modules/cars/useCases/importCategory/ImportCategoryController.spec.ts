@@ -15,15 +15,16 @@ describe("ImportCategoryController (unit)", () => {
   beforeEach(() => {
     categoriesRepositoryInMemory = new CategoriesRepositoryInMemory();
     useCase = new ImportCategoryUseCase(categoriesRepositoryInMemory);
-    controller = new ImportCategoryController();
 
-    // Mock container.resolve para retornar nosso use case real
+    // Mock container.resolve antes de criar o controller
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === ImportCategoryUseCase) {
         return useCase;
       }
       return undefined;
     });
+
+    controller = new ImportCategoryController();
   });
 
   function mockRequest(file?: any): Partial<Request> {

@@ -12,17 +12,17 @@ const createRentalController = new CreateRentalController();
 const devolutionRentalController = new DevolutionRentalController();
 const listRentalsByUserController = new ListRentalsByUserController();
 
-rentalRoutes.post("/", ensureAuthenticated, createRentalController.handle);
+rentalRoutes.post("/", ensureAuthenticated, (req, res) => createRentalController.handle(req, res));
 rentalRoutes.patch(
   "/devolution/:id",
   ensureAuthenticated,
-  devolutionRentalController.handle
+  (req, res) => devolutionRentalController.handle(req, res)
 );
 
 rentalRoutes.get(
   "/user",
   ensureAuthenticated,
-  listRentalsByUserController.handle
+  (req, res) => listRentalsByUserController.handle(req, res)
 );
 
 export { rentalRoutes };
