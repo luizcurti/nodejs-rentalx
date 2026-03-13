@@ -36,7 +36,9 @@ class ImportCategoryUseCase {
           });
         })
         .on("end", () => {
-          fs.promises.unlink(file.path);
+          fs.promises.unlink(file.path).catch((err: Error) => {
+            console.error("Failed to delete temp file:", err);
+          });
           resolve(categories);
         })
         .on("error", (err: Error) => {

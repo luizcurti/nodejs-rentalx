@@ -1,21 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
-import redis from "redis";
+import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 import { AppError } from "@shared/errors/AppError";
 
-const redisClient = redis.createClient({
-  url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-});
-
-redisClient.connect().catch((err) => {
-  console.error("Redis connection error:", err);
-});
-
-const limiter = new RateLimiterRedis({
-  storeClient: redisClient,
+const limiter = new RateLimiterMemory({
   keyPrefix: "rateLimiter",
-  points: 5,
+  points: 100,
   duration: 5,
 });
 
@@ -31,8 +21,7 @@ export default async function rateLimiter(
     if (err instanceof RateLimiterRes) {
       throw new AppError("Too many requests", 429);
     }
-    // Redis unavailable — fail open to avoid blocking all requests
-    console.error("Rate limiter error (Redis unavailable):", err);
+    console.error("Rate limiter error:", err);
     return next();
   }
 }

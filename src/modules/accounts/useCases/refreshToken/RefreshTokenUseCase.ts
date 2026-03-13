@@ -26,9 +26,17 @@ class RefreshTokenUseCase {
   ) {}
 
   async execute(token: string): Promise<ITokenResponse> {
-    const { email, sub } = verify(token, auth.secret_refresh_token) as IPayload;
+    let email: string;
+    let sub: string;
+    try {
+      const payload = verify(token, auth.secret_refresh_token) as IPayload;
+      email = payload.email;
+      sub = payload.sub;
+    } catch {
+      throw new AppError("Invalid or expired refresh token!", 401);
+    }
 
-    const user_id = sub;
+    const user_id = sub!;
 
     const userToken = await this.usersTokensRepository.findByUserIdAndRefreshToken(
       user_id,

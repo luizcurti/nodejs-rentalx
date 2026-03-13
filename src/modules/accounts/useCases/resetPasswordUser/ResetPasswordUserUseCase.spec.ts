@@ -162,7 +162,7 @@ describe("ResetPasswordUserUseCase", () => {
       expect(savedUser.password).toBeDefined();
     });
 
-  it("should handle token with undefined expires_date (covers userToken.expires_date ?? new Date())", async () => {
+  it("should throw 'Token expired!' when expires_date is undefined (security fix)", async () => {
     const user = await usersRepositoryInMemory.create({
       driver_license: "999999",
       email: "nodef@usecase.com",
@@ -183,7 +183,7 @@ describe("ResetPasswordUserUseCase", () => {
 
     await expect(
       resetPasswordUserUseCase.execute({ token: refresh_token, password: "new" })
-    ).resolves.toBeUndefined();
+    ).rejects.toMatchObject({ message: "Token expired!" });
   });
 
   it("should use empty string for avatar when user.avatar is undefined (covers avatar ?? \"\")", async () => {

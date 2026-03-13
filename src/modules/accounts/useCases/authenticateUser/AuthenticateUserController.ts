@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { container } from "tsyringe";
 
+import { AppError } from "@shared/errors/AppError";
 import { AuthenticateUserUseCase } from "./AuthenticateUserUseCase";
 
 class AuthenticateUserController {
@@ -18,7 +19,6 @@ class AuthenticateUserController {
     const { password, email } = request.body;
 
     if (!email || !password) {
-      const { AppError } = await import("@shared/errors/AppError");
       throw new AppError("Email or password incorrect!");
     }
 

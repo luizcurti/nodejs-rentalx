@@ -29,16 +29,24 @@ class ResetPasswordUserUseCase {
       throw new AppError("Token invalid!");
     }
 
+    if (!userToken.expires_date) {
+      throw new AppError("Token expired!");
+    }
+
     if (
       this.dateProvider.compareIfBefore(
-        userToken.expires_date ?? new Date(),
+        userToken.expires_date,
         this.dateProvider.dateNow()
       )
     ) {
       throw new AppError("Token expired!");
     }
 
-    const user = await this.usersRepository.findById(userToken.user_id ?? "");
+    if (!userToken.user_id) {
+      throw new AppError("Token invalid!");
+    }
+
+    const user = await this.usersRepository.findById(userToken.user_id);
     if (!user) {
       throw new AppError("User not found!");
     }
