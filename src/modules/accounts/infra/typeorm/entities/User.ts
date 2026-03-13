@@ -38,9 +38,9 @@ class User {
   avatar_url(): string | null  {
     switch (process.env.disk) {
       case "local":
-        return `${process.env.APP_API_URL}/avatar/${this.avatar}`;
+        return this.avatar ? `${process.env.APP_API_URL}/avatar/${this.avatar}` : null;
       case "s3":
-        return `${process.env.AWS_BUCKET_URL}/avatar/${this.avatar}`;
+        return this.avatar ? `${process.env.AWS_BUCKET_URL}/avatar/${this.avatar}` : null;
       default:
         return null;
     }

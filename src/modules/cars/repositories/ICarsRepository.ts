@@ -7,7 +7,9 @@ interface ICarsRepository {
   findAvailable(
     brand?: string,
     category_id?: string,
-    name?: string
+    name?: string,
+    page?: number,
+    limit?: number
   ): Promise<Car[]>;
   findById(id: string): Promise<Car | undefined>;
   updateAvailable(id: string, available: boolean): Promise<void>;

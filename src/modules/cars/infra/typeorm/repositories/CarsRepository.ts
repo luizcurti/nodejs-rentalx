@@ -1,5 +1,6 @@
-import { getRepository, Repository } from "typeorm";
+import { Repository } from "typeorm";
 
+import { AppDataSource } from "@config/data-source";
 import { ICreateCarDTO } from "@modules/cars/dtos/ICreateCarDTO";
 import { ICarsRepository } from "@modules/cars/repositories/ICarsRepository";
 
@@ -9,7 +10,7 @@ class CarsRepository implements ICarsRepository {
   private repository: Repository<Car>;
 
   constructor() {
-    this.repository = getRepository(Car);
+    this.repository = AppDataSource.getRepository(Car);
   }
 
   async create({
@@ -48,7 +49,9 @@ class CarsRepository implements ICarsRepository {
   async findAvailable(
     brand?: string,
     category_id?: string,
-    name?: string
+    name?: string,
+    page = 1,
+    limit = 20
   ): Promise<Car[]> {
     const carsQuery = await this.repository
       .createQueryBuilder("c")
@@ -66,7 +69,10 @@ class CarsRepository implements ICarsRepository {
       carsQuery.andWhere("category_id = :category_id", { category_id });
     }
 
-    const cars = await carsQuery.getMany();
+    const cars = await carsQuery
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
 
     return cars;
   }

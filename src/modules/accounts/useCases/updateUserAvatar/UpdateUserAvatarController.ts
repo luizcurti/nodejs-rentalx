@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
+import { container } from "tsyringe";
 
 import { UpdateUserAvatarUseCase } from "./UpdateUserAvatarUseCase";
 
 class UpdateUserAvatarController {
-  private updateUserAvatarUseCase?: UpdateUserAvatarUseCase;
+  private updateUserAvatarUseCase: UpdateUserAvatarUseCase;
 
   constructor(updateUserAvatarUseCase?: UpdateUserAvatarUseCase) {
-    this.updateUserAvatarUseCase = updateUserAvatarUseCase;
+    this.updateUserAvatarUseCase = updateUserAvatarUseCase ?? container.resolve(UpdateUserAvatarUseCase);
   }
 
   setUseCase(useCase: UpdateUserAvatarUseCase) {
@@ -20,13 +21,7 @@ class UpdateUserAvatarController {
     }
     const avatar_file = request.file.filename;
 
-    let useCase = this.updateUserAvatarUseCase;
-    if (!useCase) {
-      const { container } = await import("tsyringe");
-      useCase = container.resolve(UpdateUserAvatarUseCase);
-    }
-
-    await useCase.execute({ user_id: id, avatar_file });
+    await this.updateUserAvatarUseCase.execute({ user_id: id, avatar_file });
 
     return response.status(204).send();
   }

@@ -12,7 +12,7 @@ interface ISpecificationsRepository {
   }: ICreateSpecificationDTO): Promise<Specification>;
   findByName(name: string): Promise<Specification | undefined>;
   findByIds(ids: string[]): Promise<Specification[]>;
-  list(): Promise<Specification[]>;
+  list(page?: number, limit?: number): Promise<Specification[]>;
 }
 
 export { ISpecificationsRepository, ICreateSpecificationDTO };

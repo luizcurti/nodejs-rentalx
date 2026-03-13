@@ -14,17 +14,18 @@ describe("ListRentalsByUserController (unit)", () => {
   beforeEach(() => {
     rentalsRepositoryInMemory = new RentalsRepositoryInMemory();
     useCase = new ListRentalsByUserUseCase(rentalsRepositoryInMemory);
-    controller = new ListRentalsByUserController();
+    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === ListRentalsByUserUseCase) {
         return useCase;
       }
       return undefined;
     });
+    controller = new ListRentalsByUserController();
   });
 
   function mockRequest(user?: any): Partial<Request> {
-    return { user };
+    return { user, query: {} };
   }
 
   function mockResponse(): Partial<Response> {

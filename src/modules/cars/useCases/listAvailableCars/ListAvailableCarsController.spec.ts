@@ -13,15 +13,15 @@ describe("ListAvailableCarsController (unit)", () => {
   beforeEach(() => {
     carsRepositoryInMemory = new CarsRepositoryInMemory();
     useCase = new ListAvailableCarsUseCase(carsRepositoryInMemory);
-    controller = new ListAvailableCarsController();
 
-    // Mock container.resolve para retornar nosso use case real
+    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === ListAvailableCarsUseCase) {
         return useCase;
       }
       return undefined;
     });
+    controller = new ListAvailableCarsController();
   });
 
   function mockRequest(query?: any): Partial<Request> {

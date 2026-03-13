@@ -39,7 +39,8 @@ class SpecificationsRepositoryInMemory implements ISpecificationsRepository {
     return this.specifications.filter(spec => spec.id && validIds.includes(spec.id));
   }
 
-  async list(): Promise<Specification[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async list(_page?: number, _limit?: number): Promise<Specification[]> {
     return this.specifications;
   }
 }

@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
+import { container } from "tsyringe";
 
 import { ProfileUserUseCase } from "./ProfileUserUseCase";
 
 class ProfileUserController {
-  private profileUserUseCase?: ProfileUserUseCase;
+  private profileUserUseCase: ProfileUserUseCase;
 
   constructor(profileUserUseCase?: ProfileUserUseCase) {
-    this.profileUserUseCase = profileUserUseCase;
+    this.profileUserUseCase = profileUserUseCase ?? container.resolve(ProfileUserUseCase);
   }
 
   setUseCase(useCase: ProfileUserUseCase) {
@@ -15,12 +16,7 @@ class ProfileUserController {
 
   async handle(request: Request, response: Response): Promise<Response> {
     const { id } = request.user;
-    let useCase = this.profileUserUseCase;
-    if (!useCase) {
-      const { container } = await import("tsyringe");
-      useCase = container.resolve(ProfileUserUseCase);
-    }
-    const user = await useCase.execute(id);
+    const user = await this.profileUserUseCase.execute(id);
     return response.json(user);
   }
 }

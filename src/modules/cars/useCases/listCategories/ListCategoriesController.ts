@@ -11,7 +11,10 @@ class ListCategoriesController {
   }
 
   async handle(request: Request, response: Response): Promise<Response> {
-    const all = await this.listCategoriesUseCase.execute();
+    const page = Number(request.query.page) || 1;
+    const limit = Number(request.query.limit) || 20;
+
+    const all = await this.listCategoriesUseCase.execute(page, limit);
     return response.json(all);
   }
 }

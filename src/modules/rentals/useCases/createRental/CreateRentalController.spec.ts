@@ -23,14 +23,14 @@ describe("CreateRentalController (unit)", () => {
       dateProviderInMemory,
       carsRepositoryInMemory
     );
-    controller = new CreateRentalController();
-    // Mock container.resolve para retornar nosso use case real
-  jest.spyOn(container, "resolve").mockImplementation((target: any) => {
+    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
+    jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === CreateRentalUseCase) {
         return useCase;
       }
       return undefined;
     });
+    controller = new CreateRentalController();
   });
 
   function mockRequest(body?: any, user?: any): Partial<Request> {

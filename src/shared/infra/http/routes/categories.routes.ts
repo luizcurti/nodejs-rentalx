@@ -27,9 +27,9 @@ categoriesRoutes.get("/", listCategoriesController.handle);
 
 categoriesRoutes.post(
   "/import",
-  upload.single("file"),
   ensureAuthenticated,
   ensureAdmin,
+  upload.single("file"),
   importCategoryController.handle
 );
 

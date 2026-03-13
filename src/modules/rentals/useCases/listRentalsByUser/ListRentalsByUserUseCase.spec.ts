@@ -25,7 +25,7 @@ describe("ListRentalsByUserUseCase (unit)", () => {
 
     const result = await useCase.execute("user1");
 
-    expect(rentalsRepoMock.findByUser).toHaveBeenCalledWith("user1");
+    expect(rentalsRepoMock.findByUser).toHaveBeenCalledWith("user1", 1, 20);
     expect(result).toEqual(sampleRentals);
   });
 
@@ -34,7 +34,7 @@ describe("ListRentalsByUserUseCase (unit)", () => {
 
     const result = await useCase.execute("user2");
 
-    expect(rentalsRepoMock.findByUser).toHaveBeenCalledWith("user2");
+    expect(rentalsRepoMock.findByUser).toHaveBeenCalledWith("user2", 1, 20);
     expect(result).toEqual([]);
   });
 });

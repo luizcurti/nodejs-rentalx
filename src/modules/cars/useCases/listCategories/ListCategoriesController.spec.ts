@@ -5,7 +5,7 @@ import { ListCategoriesUseCase } from "@modules/cars/useCases/listCategories/Lis
 import { CategoriesRepositoryInMemory } from "@modules/cars/repositories/in-memory/CategoriesRepositoryInMemory";
 
 function mockRequest(): Request {
-  return {} as Request;
+  return { query: {} } as unknown as Request;
 }
 
 function mockResponse(): Response {

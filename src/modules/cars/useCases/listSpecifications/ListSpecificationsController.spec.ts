@@ -16,8 +16,9 @@ describe("ListSpecificationsController", () => {
         { id: "spec2", name: "Spec 2", description: "Desc 2" },
       ]),
     };
-    controller = new ListSpecificationsController();
+    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
     jest.spyOn(container, "resolve").mockReturnValue(mockUseCase);
+    controller = new ListSpecificationsController();
   });
 
   function mockResponse(): Partial<Response> {
@@ -27,7 +28,7 @@ describe("ListSpecificationsController", () => {
   }
 
   it("should return list of specifications", async () => {
-    const req = {} as Request;
+    const req = { query: {} } as unknown as Request;
     const res = mockResponse() as Response;
 
     await controller.handle(req, res);

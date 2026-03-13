@@ -1,5 +1,6 @@
-import { getRepository, Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
+import { AppDataSource } from "@config/data-source";
 import {
   ICreateSpecificationDTO,
   ISpecificationsRepository,
@@ -11,7 +12,7 @@ class SpecificationsRepository implements ISpecificationsRepository {
   private repository: Repository<Specification>;
 
   constructor() {
-    this.repository = getRepository(Specification);
+    this.repository = AppDataSource.getRepository(Specification);
   }
 
   async create({
@@ -34,12 +35,15 @@ class SpecificationsRepository implements ISpecificationsRepository {
   }
 
   async findByIds(ids: string[]): Promise<Specification[]> {
-    const specifications = await this.repository.findByIds(ids);
+    const specifications = await this.repository.findBy({ id: In(ids) });
     return specifications;
   }
 
-  async list(): Promise<Specification[]> {
-    return this.repository.find();
+  async list(page = 1, limit = 20): Promise<Specification[]> {
+    return this.repository.find({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 }
 

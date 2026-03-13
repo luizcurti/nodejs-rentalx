@@ -13,7 +13,8 @@ class CategoriesRepositoryInMemory implements ICategoriesRepository {
     return foundCategory;
   }
 
-  async list(): Promise<Category[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async list(_page?: number, _limit?: number): Promise<Category[]> {
     const all = this.categories;
     return all;
   }
