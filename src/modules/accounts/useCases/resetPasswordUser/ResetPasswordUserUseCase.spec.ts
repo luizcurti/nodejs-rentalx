@@ -151,19 +151,15 @@ describe("ResetPasswordUserUseCase", () => {
         expires_date: dateProvider.addDays(auth.expires_refresh_token_days),
       });
 
-      const spyCreate = jest.spyOn(usersRepositoryInMemory, "create");
+      const spySave = jest.spyOn(usersRepositoryInMemory, "save");
 
       await resetPasswordUserUseCase.execute({ token: refresh_token, password: "newpass" });
 
-      expect(spyCreate).toHaveBeenCalled();
+      expect(spySave).toHaveBeenCalled();
 
-      const calledArg = spyCreate.mock.calls[0][0];
-      expect(calledArg.id).toBe(user.id);
-      expect(calledArg.name).toBe(""); 
-      expect(calledArg.email).toBe(""); 
-      expect(calledArg.driver_license).toBe("");
-      expect(calledArg.avatar).toBe("");
-      expect(calledArg.password).toBeDefined();
+      const savedUser = spySave.mock.calls[0][0];
+      expect(savedUser.id).toBe(user.id);
+      expect(savedUser.password).toBeDefined();
     });
 
   it("should handle token with undefined expires_date (covers userToken.expires_date ?? new Date())", async () => {
@@ -210,11 +206,11 @@ describe("ResetPasswordUserUseCase", () => {
       expires_date: dateProvider.addDays(auth.expires_refresh_token_days),
     });
 
-    const spyCreate = jest.spyOn(usersRepositoryInMemory, "create");
+    const spySave = jest.spyOn(usersRepositoryInMemory, "save");
     await resetPasswordUserUseCase.execute({ token: refresh_token, password: "newp" });
-    expect(spyCreate).toHaveBeenCalled();
-    const calledArg = spyCreate.mock.calls[0][0];
-    expect(calledArg.avatar).toBe("");
+    expect(spySave).toHaveBeenCalled();
+    const savedUser = spySave.mock.calls[0][0];
+    expect(savedUser.avatar).toBeUndefined();;
   });
 
   it("should use empty string for avatar when repository user has avatar undefined (force findById to return avatar undefined)", async () => {
@@ -241,15 +237,15 @@ describe("ResetPasswordUserUseCase", () => {
       .spyOn(usersRepositoryInMemory, "findById")
       .mockResolvedValueOnce(forcedUser as any);
 
-    const spyCreate = jest.spyOn(usersRepositoryInMemory, "create");
+    const spySave = jest.spyOn(usersRepositoryInMemory, "save");
 
     await resetPasswordUserUseCase.execute({ token: refresh_token, password: "newp" });
 
     expect(spyFindById).toHaveBeenCalledWith(user.id);
-    expect(spyCreate).toHaveBeenCalled();
+    expect(spySave).toHaveBeenCalled();
 
-    const calledArg = spyCreate.mock.calls[0][0];
-    expect(calledArg.avatar).toBe("");
+    const savedUser = spySave.mock.calls[0][0];
+    expect(savedUser.avatar).toBeUndefined();
     spyFindById.mockRestore();
   });
 });

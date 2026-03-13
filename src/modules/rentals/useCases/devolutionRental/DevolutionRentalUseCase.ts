@@ -8,6 +8,7 @@ import { AppError } from "@shared/errors/AppError";
 
 interface IRequest {
   id: string;
+  user_id: string;
 }
 
 @injectable()
@@ -21,16 +22,18 @@ class DevolutionRentalUseCase {
     private dateProvider: IDateProvider
   ) {}
 
-  async execute({ id }: IRequest): Promise<Rental> {
+  async execute({ id, user_id }: IRequest): Promise<Rental> {
     const rental = await this.rentalsRepository.findById(id);
     if (!rental) {
       throw new AppError("Rental does not exists!");
     }
+
+    if ((rental.user_id ?? "") !== user_id) {
+      throw new AppError("Rental does not belong to user!", 403);
+    }
     const car = await this.carsRepository.findById(rental.car_id ?? "");
 
     const minimum_daily = 1;
-
-    // ...existing code...
 
     const dateNow = this.dateProvider.dateNow();
 

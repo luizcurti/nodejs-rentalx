@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
+import { container } from "tsyringe";
 
-import { UsersRepository } from "@modules/accounts/infra/typeorm/repositories/UsersRepository";
+import { IUsersRepository } from "@modules/accounts/repositories/IUsersRepository";
 import { AppError } from "@shared/errors/AppError";
 
 export async function ensureAdmin(
@@ -10,11 +11,11 @@ export async function ensureAdmin(
 ) {
   const { id } = request.user;
 
-  const usersRepository = new UsersRepository();
+  const usersRepository = container.resolve<IUsersRepository>("UsersRepository");
   const user = await usersRepository.findById(id);
 
   if (!user || !user.isAdmin) {
-    throw new AppError("User isn't admin!");
+    throw new AppError("User isn't admin!", 403);
   }
 
   return next();

@@ -27,14 +27,7 @@ class UpdateUserAvatarUseCase {
     }
     await this.storageProvider.save(avatar_file, "avatar");
     user.avatar = avatar_file;
-    await this.usersRepository.create({
-      id: user.id,
-      name: user.name ?? "",
-      email: user.email ?? "",
-      driver_license: user.driver_license ?? "",
-      password: user.password ?? "",
-      avatar: user.avatar,
-    });
+    await this.usersRepository.save(user);
   }
 }
 

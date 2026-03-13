@@ -33,8 +33,9 @@ class SendForgotPasswordMailUseCase {
       "forgotPassword.hbs"
     );
 
+    // Não revelar se o e-mail está ou não cadastrado (user enumeration)
     if (!user) {
-      throw new AppError("User does not exists!");
+      return;
     }
 
     const token = uuidV4();

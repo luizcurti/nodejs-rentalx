@@ -8,6 +8,19 @@ import { IDateProvider } from "@shared/container/providers/DateProvider/IDatePro
 import { AppError } from "@shared/errors/AppError";
 
 describe("DevolutionRentalUseCase (unit)", () => {
+  let rentalsRepoMock: jest.Mocked<IRentalsRepository>;
+  let carsRepoMock: jest.Mocked<ICarsRepository>;
+  let dateProviderMock: jest.Mocked<IDateProvider>;
+  let useCase: DevolutionRentalUseCase;
+
+  beforeEach(() => {
+    rentalsRepoMock = { findById: jest.fn(), create: jest.fn() } as unknown as jest.Mocked<IRentalsRepository>;
+    carsRepoMock = { findById: jest.fn(), updateAvailable: jest.fn() } as unknown as jest.Mocked<ICarsRepository>;
+    dateProviderMock = { dateNow: jest.fn(), compareInDays: jest.fn() } as unknown as jest.Mocked<IDateProvider>;
+
+    useCase = new DevolutionRentalUseCase(rentalsRepoMock, carsRepoMock, dateProviderMock);
+  });
+
   it("should handle rental.car_id undefined", async () => {
     const rental = {
       id: "rental8",
@@ -22,7 +35,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(undefined);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-06"));
     dateProviderMock.compareInDays.mockReturnValue(1);
-    await useCase.execute({ id: "rental8" });
+    await useCase.execute({ id: "rental8", user_id: "user8" });
     expect(carsRepoMock.findById).toHaveBeenCalledWith("");
     expect(carsRepoMock.updateAvailable).not.toHaveBeenCalled();
   });
@@ -42,8 +55,8 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-06"));
     dateProviderMock.compareInDays.mockReturnValue(1);
-    const result = await useCase.execute({ id: "rental9" });
-  expect(result.total).toBe((1 * car.daily_rate) + (1 * car.fine_amount));
+    const result = await useCase.execute({ id: "rental9", user_id: "user9" });
+    expect(result.total).toBe((1 * car.daily_rate) + (1 * car.fine_amount));
   });
 
   it("should handle rental.expected_return_date undefined", async () => {
@@ -61,8 +74,8 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-06"));
     dateProviderMock.compareInDays.mockReturnValue(1);
-    const result = await useCase.execute({ id: "rental10" });
-  expect(result.total).toBe((1 * car.daily_rate) + (1 * car.fine_amount));
+    const result = await useCase.execute({ id: "rental10", user_id: "user10" });
+    expect(result.total).toBe((1 * car.daily_rate) + (1 * car.fine_amount));
   });
 
   it("should handle car.fine_amount = 0 and car.daily_rate = 0", async () => {
@@ -80,7 +93,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-10"));
     dateProviderMock.compareInDays.mockReturnValue(5);
-    const result = await useCase.execute({ id: "rental11" });
+    const result = await useCase.execute({ id: "rental11", user_id: "user11" });
     expect(result.total).toBe(0);
   });
 
@@ -102,7 +115,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
       if (start.getTime() === rental.start_date.getTime()) return 4; // daily = 4
       return 0; // delay = 0
     });
-    const result = await useCase.execute({ id: "rental12" });
+    const result = await useCase.execute({ id: "rental12", user_id: "user12" });
     expect(result.total).toBe(4 * car.daily_rate);
   });
 
@@ -121,7 +134,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-06"));
     dateProviderMock.compareInDays.mockReturnValue(1);
-    await useCase.execute({ id: "rental13" });
+    await useCase.execute({ id: "rental13", user_id: "" });
     expect(rentalsRepoMock.create).toHaveBeenCalledWith(expect.objectContaining({
       user_id: "",
       car_id: "",
@@ -142,7 +155,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(undefined);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-06"));
     dateProviderMock.compareInDays.mockReturnValue(1);
-    await useCase.execute({ id: "rental4" });
+    await useCase.execute({ id: "rental4", user_id: "user4" });
     expect(carsRepoMock.updateAvailable).not.toHaveBeenCalled();
   });
 
@@ -161,7 +174,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-10"));
     dateProviderMock.compareInDays.mockReturnValue(5);
-    const result = await useCase.execute({ id: "rental5" });
+    const result = await useCase.execute({ id: "rental5", user_id: "user5" });
     expect(result.total).toBe(5 * car.daily_rate);
   });
 
@@ -180,7 +193,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-10"));
     dateProviderMock.compareInDays.mockReturnValue(5);
-    const result = await useCase.execute({ id: "rental6" });
+    const result = await useCase.execute({ id: "rental6", user_id: "user6" });
     expect(result.total).toBe(5 * car.fine_amount);
   });
 
@@ -199,26 +212,14 @@ describe("DevolutionRentalUseCase (unit)", () => {
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-10"));
     dateProviderMock.compareInDays.mockReturnValue(5);
-    const result = await useCase.execute({ id: "rental7" });
+    const result = await useCase.execute({ id: "rental7", user_id: "user7" });
     expect(result.total).toBe(5 * car.daily_rate);
-  });
-  let rentalsRepoMock: jest.Mocked<IRentalsRepository>;
-  let carsRepoMock: jest.Mocked<ICarsRepository>;
-  let dateProviderMock: jest.Mocked<IDateProvider>;
-  let useCase: DevolutionRentalUseCase;
-
-  beforeEach(() => {
-    rentalsRepoMock = { findById: jest.fn(), create: jest.fn() } as unknown as jest.Mocked<IRentalsRepository>;
-    carsRepoMock = { findById: jest.fn(), updateAvailable: jest.fn() } as unknown as jest.Mocked<ICarsRepository>;
-    dateProviderMock = { dateNow: jest.fn(), compareInDays: jest.fn() } as unknown as jest.Mocked<IDateProvider>;
-
-    useCase = new DevolutionRentalUseCase(rentalsRepoMock, carsRepoMock, dateProviderMock);
   });
 
   it("should throw AppError if rental does not exist", async () => {
     rentalsRepoMock.findById.mockResolvedValue(undefined);
 
-    await expect(useCase.execute({ id: "rental1" }))
+    await expect(useCase.execute({ id: "rental1", user_id: "user1" }))
       .rejects
       .toEqual(new AppError("Rental does not exists!"));
   });
@@ -242,7 +243,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
       return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     });
 
-    const result = await useCase.execute({ id: "rental1" });
+    const result = await useCase.execute({ id: "rental1", user_id: "user1" });
 
     expect(rentalsRepoMock.create).toHaveBeenCalled();
     expect(carsRepoMock.updateAvailable).toHaveBeenCalledWith(car.id, true);
@@ -271,7 +272,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
       return -1; // delay <= 0
     });
 
-    const result = await useCase.execute({ id: "rental2" });
+    const result = await useCase.execute({ id: "rental2", user_id: "user2" });
     // daily deve ser setado para minimum_daily (1), então total = 1 * daily_rate
     expect(result.total).toBe(car.daily_rate);
     expect(result.end_date).toBeDefined();
@@ -298,7 +299,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
       return 5; // delay = 5
     });
 
-    const result = await useCase.execute({ id: "rental3" });
+    const result = await useCase.execute({ id: "rental3", user_id: "user3" });
     // total = (delay * fine_amount) + (daily * daily_rate)
     expect(result.total).toBe((5 * car.fine_amount) + (5 * car.daily_rate));
     expect(result.end_date).toBeDefined();

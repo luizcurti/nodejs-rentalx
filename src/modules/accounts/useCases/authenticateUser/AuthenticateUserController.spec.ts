@@ -90,7 +90,9 @@ describe("AuthenticateUserController", () => {
       usersTokensRepositoryInMemory,
       dateProvider
     );
+    const resolveSpy = jest.spyOn(container, "resolve").mockImplementation(() => newUseCase);
     const controllerNoUseCase = new AuthenticateUserController();
+    resolveSpy.mockRestore();
     controllerNoUseCase.setUseCase(newUseCase);
     const req = mockRequest({ email: "set@user.com", password: "setpass" });
     const res = mockResponse();
@@ -105,14 +107,13 @@ describe("AuthenticateUserController", () => {
       password: "containerpass",
       name: "Container User",
     });
+    // Mocka o container.resolve antes de criar o controller para evitar erro de DI
+    const resolveSpy = jest.spyOn(container, "resolve").mockImplementation(() => authenticateUserUseCase);
     const controllerNoUseCase = new AuthenticateUserController();
+    resolveSpy.mockRestore();
     const req = mockRequest({ email: "container@user.com", password: "containerpass" });
     const res = mockResponse();
-    // Mocka o container.resolve para retornar o use case in-memory
-  // Mocka apenas o método container.resolve
-  const resolveSpy = jest.spyOn(container, "resolve").mockImplementation(() => authenticateUserUseCase);
-  await controllerNoUseCase.handle(req, res);
-  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: expect.any(String) }));
-  resolveSpy.mockRestore();
+    await controllerNoUseCase.handle(req, res);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: expect.any(String) }));
   });
 });

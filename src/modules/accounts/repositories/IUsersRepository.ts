@@ -3,6 +3,7 @@ import { User } from "../infra/typeorm/entities/User";
 
 interface IUsersRepository {
   create(data: ICreateUserDTO & { id?: string; avatar?: string }): Promise<User>;
+  save(user: User): Promise<User>;
   findByEmail(email: string): Promise<User | undefined>;
   findById(id: string): Promise<User | undefined>;
 }

@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
+import { container } from "tsyringe";
 
 import { ResetPasswordUserUseCase } from "./ResetPasswordUserUseCase";
 
 class ResetPasswordUserController {
-  private resetPasswordUserUseCase?: ResetPasswordUserUseCase;
+  private resetPasswordUserUseCase: ResetPasswordUserUseCase;
 
   constructor(resetPasswordUserUseCase?: ResetPasswordUserUseCase) {
-    this.resetPasswordUserUseCase = resetPasswordUserUseCase;
+    this.resetPasswordUserUseCase = resetPasswordUserUseCase ?? container.resolve(ResetPasswordUserUseCase);
   }
 
   setUseCase(useCase: ResetPasswordUserUseCase) {
@@ -16,12 +17,9 @@ class ResetPasswordUserController {
   async handle(request: Request, response: Response): Promise<Response> {
     const { token } = request.query;
     const { password } = request.body;
-    let useCase = this.resetPasswordUserUseCase;
-    if (!useCase) {
-      const { container } = await import("tsyringe");
-      useCase = container.resolve(ResetPasswordUserUseCase);
-    }
-    await useCase.execute({ token: String(token), password });
+
+    await this.resetPasswordUserUseCase.execute({ token: String(token), password });
+
     return response.send();
   }
 }

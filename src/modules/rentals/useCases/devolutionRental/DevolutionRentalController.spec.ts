@@ -26,8 +26,8 @@ describe("DevolutionRentalController (unit)", () => {
   jest.spyOn(container, "resolve").mockReturnValue(mockUseCase);
   });
 
-  function mockRequest(params?: any): Partial<Request> {
-    return { params };
+  function mockRequest(params?: any, user?: any): Partial<Request> {
+    return { params, user: user ?? { id: "user1" } };
   }
 
   function mockResponse(): Partial<Response> {
@@ -37,13 +37,13 @@ describe("DevolutionRentalController (unit)", () => {
     return res;
   }
 
-  it("should call use case with rental id and return rental", async () => {
-    const req = mockRequest({ id: "rental1" }) as Request;
+  it("should call use case with rental id and user_id and return rental", async () => {
+    const req = mockRequest({ id: "rental1" }, { id: "user1" }) as Request;
     const res = mockResponse() as Response;
 
     await controller.handle(req, res);
 
-  expect(mockUseCase.execute).toHaveBeenCalledWith({ id: "rental1" });
+    expect(mockUseCase.execute).toHaveBeenCalledWith({ id: "rental1", user_id: "user1" });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -43,14 +43,7 @@ class ResetPasswordUserUseCase {
       throw new AppError("User not found!");
     }
     user.password = await hash(password, 8);
-    await this.usersRepository.create({
-      id: user.id,
-      name: user.name ?? "",
-      email: user.email ?? "",
-      driver_license: user.driver_license ?? "",
-      password: user.password,
-      avatar: user.avatar ?? "",
-    });
+    await this.usersRepository.save(user);
     await this.usersTokensRepository.deleteById(userToken.id);
   }
 }

@@ -3,7 +3,6 @@ import { Car } from "@modules/cars/infra/typeorm/entities/Car";
 import { ICarsRepository } from "@modules/cars/repositories/ICarsRepository";
 import { ISpecificationsRepository } from "@modules/cars/repositories/ISpecificationsRepository";
 import { AppError } from "@shared/errors/AppError";
-import { ICreateCarDTO } from "@modules/cars/dtos/ICreateCarDTO";
 
 interface IRequest {
   car_id: string;
@@ -28,21 +27,20 @@ class CreateCarSpecificationUseCase {
     }
 
     const specifications = await this.specificationsRepository.findByIds(specifications_id);
-    
+
     carExists.specifications = specifications;
 
-    const carDTO: ICreateCarDTO = {
+    await this.carsRepository.create({
+      id: carExists.id,
       name: carExists.name ?? '',
       description: carExists.description ?? '',
-      daily_rate: carExists.daily_rate ?? 0, 
-      license_plate: carExists.license_plate ?? '', 
+      daily_rate: carExists.daily_rate ?? 0,
+      license_plate: carExists.license_plate ?? '',
       fine_amount: carExists.fine_amount ?? 0,
-      brand: carExists.brand ?? '', 
-      category_id: carExists.category_id ?? '', 
-      specifications: specifications, 
-    };
-
-    await this.carsRepository.create(carDTO);
+      brand: carExists.brand ?? '',
+      category_id: carExists.category_id ?? '',
+      specifications,
+    });
 
     return carExists;
   }

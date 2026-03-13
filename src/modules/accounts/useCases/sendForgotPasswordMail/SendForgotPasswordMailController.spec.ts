@@ -57,11 +57,11 @@ describe("SendForgotPasswordMailController", () => {
     expect(res.send).toHaveBeenCalled();
   });
 
-  it("should return error if user does not exist", async () => {
+  it("should return successfully even if user does not exist (no user enumeration)", async () => {
     const req = mockRequest({ email: "notfound@user.com" });
     const res = mockResponse();
-    const { AppError } = await import("@shared/errors/AppError");
-    await expect(controller.handle(req, res)).rejects.toBeInstanceOf(AppError);
+    await controller.handle(req, res);
+    expect(res.send).toHaveBeenCalled();
   });
 
     it("should set a new useCase via setUseCase", async () => {

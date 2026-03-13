@@ -65,12 +65,12 @@ describe("UpdateUserAvatarUseCase", () => {
     });
 
     const spySave = jest.spyOn(storageProviderInMemory, "save");
-    const spyCreate = jest.spyOn(usersRepositoryInMemory, "create");
+    const spyUserSave = jest.spyOn(usersRepositoryInMemory, "save");
 
     await updateUserAvatarUseCase.execute({ user_id: user.id, avatar_file: "avatar2.png" });
 
     expect(spySave).toHaveBeenCalledWith("avatar2.png", "avatar");
-    expect(spyCreate).toHaveBeenCalled();
+    expect(spyUserSave).toHaveBeenCalled();
   });
 
   it("should cover ?? '' defaults when user fields are undefined", async () => {
@@ -83,17 +83,13 @@ describe("UpdateUserAvatarUseCase", () => {
       avatar: undefined as any,
     });
 
-    const spyCreate = jest.spyOn(usersRepositoryInMemory, "create");
+    const spyUserSave = jest.spyOn(usersRepositoryInMemory, "save");
 
     await updateUserAvatarUseCase.execute({ user_id: user.id, avatar_file: "defaultavatar.png" });
 
-    expect(spyCreate).toHaveBeenCalled();
+    expect(spyUserSave).toHaveBeenCalled();
 
-    const calledArg = spyCreate.mock.calls[0][0];
-    expect(calledArg.driver_license).toBe("");
-    expect(calledArg.email).toBe("");
-    expect(calledArg.password).toBe("");
-    expect(calledArg.name).toBe("");
-    expect(calledArg.avatar).toBe("defaultavatar.png");
+    const savedUser = spyUserSave.mock.calls[0][0];
+    expect(savedUser.avatar).toBe("defaultavatar.png");
   });
 });
