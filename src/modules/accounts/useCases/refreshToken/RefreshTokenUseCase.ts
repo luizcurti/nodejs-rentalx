@@ -36,7 +36,7 @@ class RefreshTokenUseCase {
       throw new AppError("Invalid or expired refresh token!", 401);
     }
 
-    const user_id = sub!;
+    const user_id = sub as string;
 
     const userToken = await this.usersTokensRepository.findByUserIdAndRefreshToken(
       user_id,

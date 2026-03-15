@@ -9,3 +9,4 @@ process.env.REDIS_HOST = "localhost";
 process.env.REDIS_PORT = "6379";
 process.env.disk = "local";
 process.env.APP_API_URL = "http://localhost:3333";
+process.env.MAIL_PROVIDER = "ethereal";

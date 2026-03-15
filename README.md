@@ -1,206 +1,269 @@
 # 🚗 RentalX API
 
-A robust REST API built with Node.js/TypeScript that simulates a complete car rental system, following SOLID principles and implementing TDD (Test-Driven Development).
+A robust REST API built with **Node.js / TypeScript** that simulates a complete car-rental platform, designed around SOLID principles, Clean Architecture, and a full test suite (unit + E2E).
+
+---
 
 ## ✨ Features
 
-- **👤 User Management**: Registration, JWT authentication, user profiles, and password recovery via email
-- **🚙 Car Management**: Full CRUD for vehicles, categories, specifications, and image uploads
-- **📋 Rental System**: Complete car rental and return process with validations
-- **🔐 Secure Authentication**: JWT with refresh tokens and rate limiting
-- **📧 Email System**: Email sending with HTML templates
-- **☁️ Storage**: Local and AWS S3 storage support
-- **📖 Documentation**: Integrated Swagger/OpenAPI documentation
+| Area | Capabilities |
+|---|---|
+| 👤 **Users** | Registration, JWT authentication, profile, avatar upload, password recovery |
+| 🚙 **Cars** | Create / list vehicles, categories, specifications, image upload |
+| 📋 **Rentals** | Rent and return cars with business rule validations |
+| 🔐 **Security** | JWT access + refresh tokens, rate limiting, admin guard |
+| 📧 **Email** | Forgot-password flow with Handlebars HTML templates |
+| ☁️ **Storage** | Local disk or AWS S3 (configurable at startup) |
+| 📖 **Docs** | Swagger / OpenAPI at `/api-docs` |
+
+---
 
 ## 🛠 Tech Stack
 
-- **Backend**: Node.js, TypeScript, Express 4.21.2 (stable)
-- **Database**: PostgreSQL with TypeORM 0.3+
-- **Cache**: Redis for sessions and rate limiting
-- **Testing**: Jest with code coverage
-- **Authentication**: JWT (JSON Web Tokens)
-- **Validation**: Class-transformer and class-validator
-- **Email**: Nodemailer with Handlebars templates
-- **Storage**: AWS S3 v3 + local storage with Multer
-- **Containerization**: Docker and Docker Compose
+- **Runtime**: Node.js 18 LTS, TypeScript
+- **Framework**: Express 4
+- **Database**: PostgreSQL + TypeORM 0.3
+- **Cache**: Redis (rate limiter)
+- **Auth**: JWT (`jsonwebtoken`), bcrypt
+- **DI Container**: TSyringe
+- **Testing**: Jest 29 + Supertest (unit + E2E)
+- **Email**: Nodemailer + Handlebars
+- **Storage**: Multer + `@aws-sdk/client-s3`
+- **Containers**: Docker + Docker Compose
 - **Code Quality**: ESLint 9, Prettier
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ (LTS recommended)
-- PostgreSQL 12+
-- Redis 6+
-- Docker and Docker Compose (optional)
+- **Node.js** 18+
+- **Docker** + **Docker Compose** (or local PostgreSQL 12+ and Redis 6+)
 
-### Installation
+### 1 — Clone & install
 
 ```bash
-# Clone the repository
 git clone https://github.com/luizcurti/nodejs-rentalx.git
 cd nodejs-rentalx
-
-# Install dependencies
 npm install
-
-# Setup environment
-cp .env.example .env
-# Edit .env with your configurations
-
-# Start services (Docker)
-docker-compose up -d database redis
-
-# Run migrations
-npm run migration:run
-
-# Create admin user (optional)
-npm run seed:admin
-
-# Start development server
-npm run dev
 ```
 
-The API will be available at `http://localhost:3333`
+### 2 — Environment
 
-## 📊 Available Scripts
+```bash
+cp .env.example .env
+# Edit .env with your values (see Environment Variables section below)
+```
+
+### 3 — Start services
+
+```bash
+docker compose up -d          # starts postgres (database_ignite) + redis
+```
+
+### 4 — Run migrations & seed
+
+```bash
+npm run migration:run          # apply all migrations to the default database
+npm run seed:admin             # optional: creates the default admin user
+```
+
+### 5 — Start the API
+
+```bash
+npm run dev                    # ts-node-dev with hot reload on port 3333
+```
+
+The API will be available at `http://localhost:3333`.  
+Swagger UI: `http://localhost:3333/api-docs`.
+
+---
+
+## 📊 NPM Scripts
 
 ```bash
 # Development
-npm run dev           # Start development server
-npm run build         # Build for production
+npm run dev               # Start dev server with hot reload
+npm run build             # Compile TypeScript to dist/
 
 # Database
-npm run migration:run      # Run migrations
-npm run migration:revert   # Revert migration
-npm run migration:generate # Generate new migration
+npm run migration:run     # Run pending migrations
+npm run migration:revert  # Revert last migration
+npm run migration:generate # Generate a new migration
 
 # Testing
-npm test              # Run all tests
-npm run test:coverage # Run tests with coverage
+npm test                  # Run all tests (unit + E2E) — requires Docker running
+npm run test:coverage     # Same with lcov/text coverage report
 
-# Code Quality
-npm run lint          # Check code issues
-npm run lint:fix      # Fix code issues
-npm run format        # Format code with Prettier
+# Code quality
+npm run lint              # ESLint check
+npm run lint:fix          # ESLint auto-fix
+npm run format            # Prettier format
 
 # Utilities
-npm run seed:admin    # Create admin user
+npm run seed:admin        # Insert default admin user into the database
 ```
+
+---
 
 ## 🐳 Docker
 
 ```bash
-# Start all services
-docker-compose up -d
+# Start only the required services (recommended for local dev)
+docker compose up -d database redis
 
-# Only database and redis
-docker-compose up -d database redis
+# Start everything (when the app container is enabled in docker-compose.yml)
+docker compose up -d
 
-# View logs
-docker-compose logs -f app
+# Tail logs
+docker compose logs -f database
+
+# Stop and remove containers
+docker compose down
 ```
 
-## 📋 API Documentation
-
-Visit `http://localhost:3333/api-docs` to see the complete Swagger documentation.
-
-### 🔐 Authentication
-
-The API uses **JWT (JSON Web Tokens)** for authentication. Include the token in the header:
-
-```
-Authorization: Bearer <your_jwt_token>
-```
-
-### Main Endpoints
-
-#### Authentication
-- `POST /sessions` - User login
-- `POST /refresh-token` - Refresh token
-- `POST /password/forgot` - Password recovery
-- `POST /password/reset` - Reset password
-
-#### Users
-- `POST /users` - Create user
-- `GET /users/profile` - User profile
-- `PATCH /users/avatar` - Upload avatar
-
-#### Cars
-- `POST /cars` - Create car (admin only)
-- `GET /cars/available` - List available cars
-- `POST /cars/images/{id}` - Upload car images (admin only)
-
-#### Categories
-- `POST /categories` - Create category (admin only)
-- `GET /categories` - List categories
-- `POST /categories/import` - Import categories from CSV (admin only)
-
-#### Rentals
-- `POST /rentals` - Create rental
-- `POST /rentals/devolution/{id}` - Return car
-- `GET /rentals/user` - User's rentals
-
-### Example Usage
-
-#### Login
-```bash
-curl -X POST http://localhost:3333/sessions \
-  -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com", "password": "password123"}'
-```
-
-#### List Available Cars
-```bash
-curl -X GET http://localhost:3333/cars/available \
-  -H "Authorization: Bearer <your_token>"
-```
-
-#### Create Rental
-```bash
-curl -X POST http://localhost:3333/rentals \
-  -H "Authorization: Bearer <your_token>" \
-  -H "Content-Type: application/json" \
-  -d '{"car_id": "uuid", "expected_return_date": "2025-01-10T00:00:00.000Z"}'
-```
-
-### Error Responses
-
-All error responses follow this pattern:
-
-```json
-{
-  "status": "error",
-  "message": "Error description"
-}
-```
-
-### Rate Limiting
-
-- **Limit**: 5 requests per 15 seconds per IP
-- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+---
 
 ## 🧪 Testing
 
+The project ships with **two test layers**:
+
+### Unit tests (37 suites — 129 tests)
+
+Controller and UseCase tests that run entirely **in-memory** — no database required.
+
 ```bash
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific tests
-npm test -- --testPathPattern=AuthenticateUser
+NODE_ENV=test npx jest --runInBand --testPathIgnorePatterns='e2e.spec.ts' --config jest.config.ts
 ```
 
-Current test coverage: **100%** (126 tests passing, 99.61% branches)
+### E2E / Integration tests (1 suite — 73 tests)
 
-## 🔧 Environment Configuration
-
-### Required Environment Variables (.env)
+HTTP-level tests using **Supertest** against a real PostgreSQL database (`rentx_test`).
 
 ```bash
-# Database
+# Make sure Docker is running, then:
+docker exec database_ignite psql -U docker -d postgres -c "CREATE DATABASE rentx_test;"  # first time only
+NODE_ENV=test npx jest --runInBand --testPathPattern="e2e.spec.ts" --config jest.config.ts
+```
+
+### Run everything
+
+```bash
+npm test
+```
+
+**Current results:**
+
+```
+Test Suites : 38 passed
+Tests       : 202 passed (129 unit + 73 E2E)
+Coverage    : 99.79% statements · 96.77% branches · 100% functions
+ESLint      : 0 errors · 0 warnings
+```
+
+### E2E routes covered
+
+| Route | Methods tested |
+|---|---|
+| `/sessions` | valid login, wrong password, missing fields (×6) |
+| `/refresh-token` | body token, header token, invalid token, missing (×4) |
+| `/users` | create, duplicate email, incomplete data (×3) |
+| `/users/profile` | authenticated, no token, malformed token, empty header (×4) |
+| `/users/avatar` | upload file, no file, no token (×3) |
+| `/categories` | create (admin/user/no-auth), list, import CSV (×9) |
+| `/specifications` | create (admin/user/no-auth), list (×6) |
+| `/cars` | create (admin/user/no-auth/duplicate), list available, filters, pagination (×10) |
+| `/cars/specifications/:id` | add spec, bad car id, no-auth (×4) |
+| `/cars/images/:id` | upload image, no-auth (×3) |
+| `/rentals` | create, validations, conflicts, list, devolution (×11) |
+| `/password/forgot` + `/password/reset` | full reset flow, expired/missing token (×7) |
+
+---
+
+## 📋 API Reference
+
+### Authentication
+
+All protected routes require:
+
+```
+Authorization: Bearer <access_token>
+```
+
+Admin-only routes additionally require `isAdmin = true` on the authenticated user.
+
+### Endpoints
+
+#### Auth
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/sessions` | — | Login — returns `token` + `refresh_token` |
+| POST | `/refresh-token` | — | Exchange refresh token for a new pair |
+| POST | `/password/forgot` | — | Send password-reset email |
+| POST | `/password/reset` | — | Reset password using the emailed token |
+
+#### Users
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/users` | — | Create account |
+| GET | `/users/profile` | ✅ | Authenticated user profile |
+| PATCH | `/users/avatar` | ✅ | Upload avatar image (multipart) |
+
+#### Categories
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/categories` | ✅ Admin | Create category |
+| GET | `/categories` | — | List all categories |
+| POST | `/categories/import` | ✅ Admin | Import categories from CSV |
+
+#### Specifications
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/specifications` | ✅ Admin | Create specification |
+| GET | `/specifications` | — | List all specifications |
+
+#### Cars
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/cars` | ✅ Admin | Create car |
+| GET | `/cars/available` | — | List available cars (supports `?brand`, `?name`, `?category_id`, `?page`, `?limit`) |
+| POST | `/cars/specifications/:id` | ✅ Admin | Attach specifications to a car |
+| POST | `/cars/images/:id` | ✅ Admin | Upload car images (multipart, multiple files) |
+
+#### Rentals
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/rentals` | ✅ | Create rental — requires `car_id` and `expected_return_date` (≥ 24 h) |
+| PATCH | `/rentals/devolution/:id` | ✅ | Return car — calculates `total` with fine if late |
+| GET | `/rentals/user` | ✅ | List authenticated user's rentals |
+
+### Business Rules
+
+- A car can only be rented when `available = true`.
+- Minimum rental period is **24 hours**.
+- A user may only have **one open rental** at a time.
+- Late returns incur a fine: `fine_amount × overdue_days` added to the daily total.
+- Password-reset tokens expire after **3 hours** and are single-use.
+
+### Error Format
+
+```json
+{ "message": "Human-readable error description" }
+```
+
+HTTP status codes: `400` (business error), `401` (unauthenticated), `403` (forbidden), `429` (rate limit), `500` (unexpected).
+
+### Rate Limiting
+
+100 requests per 5 seconds per IP (in-memory, configurable in `rateLimiter.ts`).
+
+---
+
+## 🔧 Environment Variables
+
+```bash
+# PostgreSQL
 DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=docker
@@ -208,16 +271,11 @@ DB_PASSWORD=ignite
 DB_DATABASE=rentx
 
 # JWT
-JWT_SECRET_TOKEN=your_secret_token
+JWT_SECRET_TOKEN=change_me_in_production
 JWT_EXPIRES_IN_TOKEN=15m
-JWT_SECRET_REFRESH_TOKEN=your_refresh_secret
+JWT_SECRET_REFRESH_TOKEN=change_me_in_production
 JWT_EXPIRES_IN_REFRESH_TOKEN=30d
-
-# AWS (optional)
-AWS_BUCKET=your_bucket
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_REGION=us-east-1
+JWT_EXPIRES_REFRESH_TOKEN_DAYS=30
 
 # Redis
 REDIS_HOST=localhost
@@ -226,72 +284,73 @@ REDIS_PORT=6379
 # Application
 NODE_ENV=development
 PORT=3333
+APP_API_URL=http://localhost:3333
+APP_CORS_ORIGIN=*
+
+# Storage: "local" or "s3"
+disk=local
+
+# AWS (required when disk=s3)
+AWS_BUCKET=your-bucket-name
+AWS_BUCKET_REGION=us-east-1
+AWS_BUCKET_URL=https://your-bucket-name.s3.us-east-1.amazonaws.com
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+
+# Email: "ethereal" (dev) or "ses" (prod)
+MAIL_PROVIDER=ethereal
+FORGOT_MAIL_URL=http://localhost:3333/password/reset?token=
 ```
 
-## 🏗 Architecture
+---
 
-The project follows SOLID principles and Clean Architecture:
+## 🏗 Project Architecture
 
 ```
 src/
-├── modules/           # Application modules
-│   ├── accounts/      # Users and authentication
-│   ├── cars/          # Car management
-│   └── rentals/       # Rental system
-├── shared/            # Shared code
-│   ├── container/     # Dependency injection
-│   ├── infra/         # Infrastructure (HTTP, DB)
-│   └── errors/        # Error handling
-└── utils/             # Utilities
+├── config/                    # TypeORM datasource, JWT config, upload config
+├── modules/
+│   ├── accounts/              # Users, auth, tokens, email
+│   │   ├── dtos/
+│   │   ├── infra/typeorm/     # Entities + repositories (TypeORM)
+│   │   ├── mapper/            # UserMap (class-transformer)
+│   │   ├── repositories/      # Interfaces + in-memory implementations
+│   │   └── useCases/          # One folder per use case (Controller + UseCase + tests)
+│   ├── cars/                  # Cars, categories, specifications, images
+│   └── rentals/               # Rental lifecycle
+├── shared/
+│   ├── container/             # TSyringe registrations + providers (Date, Mail, Storage)
+│   ├── errors/                # AppError
+│   └── infra/
+│       ├── http/              # app.ts, server.ts, routes, middlewares, e2e.spec.ts
+│       └── typeorm/           # migrations, seed
+└── utils/                     # File helpers
 ```
 
-### Design Patterns Used
-- **Repository Pattern**: Data access abstraction
-- **Dependency Injection**: Using TSyringe
-- **Use Case Pattern**: Business logic encapsulation
-- **Factory Pattern**: For creating instances
-- **Strategy Pattern**: For different storage providers
+### Design Patterns
+
+| Pattern | Usage |
+|---|---|
+| **Repository** | `IUsersRepository`, `ICarsRepository`, … — swappable between TypeORM and in-memory |
+| **Use Case** | Each business action is an isolated injectable class |
+| **Dependency Injection** | TSyringe `@injectable` / `@inject` decorators |
+| **Mapper / DTO** | `UserMap.toDTO()` with `class-transformer` `instanceToInstance` |
+| **Strategy** | Storage provider (`local` vs `s3`) resolved at startup |
+
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how to get started:
+1. Fork the repo and create a feature branch: `git checkout -b feat/your-feature`
+2. Follow the coding standards (PascalCase for classes, `I` prefix for interfaces)
+3. Write or update tests — keep coverage above 95 %
+4. Lint and format: `npm run lint:fix && npm run format`
+5. Commit using [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `test:`, `chore:`
+6. Open a Pull Request with a clear description of your changes
 
-### Development Setup
+---
 
-```bash
-# 1. Fork the repository on GitHub
+## 📄 License
 
-# 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/nodejs-rentalx.git
-cd nodejs-rentalx
+This project is open-source and available under the [MIT License](LICENSE).
 
-# 3. Add upstream remote
-git remote add upstream https://github.com/luizcurti/nodejs-rentalx.git
-
-# 4. Install dependencies
-npm install
-
-# 5. Create a feature branch
-git checkout -b feature/amazing-feature
-
-# 6. Make your changes and commit
-git commit -m "feat: add amazing feature"
-
-# 7. Push to your fork and create a Pull Request
-git push origin feature/amazing-feature
-```
-
-### Coding Standards
-
-- **Naming**: PascalCase for classes, camelCase for variables/functions
-- **Interfaces**: Prefix with `I` (e.g., `IUsersRepository`)
-- **Files**: camelCase (e.g., `createUserUseCase.ts`)
-- **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/)
-
-### Pull Request Process
-
-1. Ensure tests pass: `npm test`
-2. Lint your code: `npm run lint`
-3. Format your code: `npm run format`
-4. Update documentation if needed
-5. Create a Pull Request with a clear description
