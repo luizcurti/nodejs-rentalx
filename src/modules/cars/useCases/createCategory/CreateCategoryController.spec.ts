@@ -33,7 +33,7 @@ describe("CreateCategoryController (unit)", () => {
 
     await controller.handle(req, res);
 
-    // Verifica se a categoria foi criada no repo in-memory
+    // Verify the category was created in the in-memory repo
     const created = await categoriesRepositoryInMemory.findByName("SUV");
     expect(created).toBeDefined();
     expect(created?.description).toBe("Some description");
@@ -45,7 +45,7 @@ describe("CreateCategoryController (unit)", () => {
   it("should resolve use case from container when not provided", () => {
     const mockUseCase = { execute: jest.fn() };
     const resolveSpy = jest.spyOn(container, "resolve").mockReturnValue(mockUseCase as any);
-    controller = new CreateCategoryController(); // sem parâmetro
+    controller = new CreateCategoryController(); // no argument
     expect(resolveSpy).toHaveBeenCalledWith(CreateCategoryUseCase);
     jest.restoreAllMocks();
   });

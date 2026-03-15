@@ -266,14 +266,14 @@ describe("DevolutionRentalUseCase (unit)", () => {
     rentalsRepoMock.findById.mockResolvedValue(rental as any);
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-10"));
-    // Simula daily <= 0
+    // Simulate daily <= 0
     dateProviderMock.compareInDays.mockImplementation((start: Date) => {
       if (start.getTime() === rental.start_date.getTime()) return 0; // daily <= 0
       return -1; // delay <= 0
     });
 
     const result = await useCase.execute({ id: "rental2", user_id: "user2" });
-    // daily deve ser setado para minimum_daily (1), então total = 1 * daily_rate
+    // daily should be set to minimum_daily (1), so total = 1 * daily_rate
     expect(result.total).toBe(car.daily_rate);
     expect(result.end_date).toBeDefined();
   });
@@ -293,7 +293,7 @@ describe("DevolutionRentalUseCase (unit)", () => {
     rentalsRepoMock.findById.mockResolvedValue(rental as any);
     carsRepoMock.findById.mockResolvedValue(car as any);
     dateProviderMock.dateNow.mockReturnValue(new Date("2025-10-10"));
-    // Simula daily > 0 e delay > 0
+    // Simulate daily > 0 and delay > 0
     dateProviderMock.compareInDays.mockImplementation((start: Date) => {
       if (start.getTime() === rental.start_date.getTime()) return 5; // daily = 5
       return 5; // delay = 5

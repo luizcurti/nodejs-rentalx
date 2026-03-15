@@ -14,7 +14,7 @@ describe("ListAvailableCarsController (unit)", () => {
     carsRepositoryInMemory = new CarsRepositoryInMemory();
     useCase = new ListAvailableCarsUseCase(carsRepositoryInMemory);
 
-    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
+    // Mock container.resolve before creating the controller to support the constructor DI pattern
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === ListAvailableCarsUseCase) {
         return useCase;
@@ -35,7 +35,7 @@ describe("ListAvailableCarsController (unit)", () => {
   }
 
   it("should call useCase with query params and return json, using in-memory repo", async () => {
-    // Adiciona carros disponíveis
+    // Add available cars
     await carsRepositoryInMemory.create({
       id: "1",
       name: "Corolla",
@@ -62,7 +62,7 @@ describe("ListAvailableCarsController (unit)", () => {
 
     await controller.handle(req, res);
 
-    // Deve retornar apenas o carro da Toyota Corolla
+    // Should return only the Toyota Corolla
     expect(res.json).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({ name: "Corolla", brand: "Toyota" })
@@ -71,7 +71,7 @@ describe("ListAvailableCarsController (unit)", () => {
   });
 
   it("should call useCase with empty query if no query provided, using in-memory repo", async () => {
-    // Adiciona carros disponíveis
+    // Add available cars
     await carsRepositoryInMemory.create({
       id: "1",
       name: "Corolla",
@@ -98,7 +98,7 @@ describe("ListAvailableCarsController (unit)", () => {
 
     await controller.handle(req, res);
 
-    // Deve retornar todos os carros disponíveis
+    // Should return all available cars
     expect(res.json).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({ name: "Corolla" }),

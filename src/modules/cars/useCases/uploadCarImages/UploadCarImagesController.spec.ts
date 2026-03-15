@@ -34,7 +34,7 @@ describe("UploadCarImagesController (unit)", () => {
   });
 
   function mockRequest(): Partial<Request> {
-    // Simula arquivos no formato esperado pelo multer
+    // Simulate files in the format expected by multer
     return {
       params: { id: "123" },
       files: [
@@ -48,7 +48,7 @@ describe("UploadCarImagesController (unit)", () => {
           destination: "",
           path: "",
           buffer: Buffer.from([]),
-          stream: {} as any // mock do stream
+          stream: {} as any // mock stream
         },
         {
           filename: "image2.jpg",
@@ -60,7 +60,7 @@ describe("UploadCarImagesController (unit)", () => {
           destination: "",
           path: "",
           buffer: Buffer.from([]),
-          stream: {} as any // mock do stream
+          stream: {} as any // mock stream
         }
       ]
     };
@@ -79,11 +79,11 @@ describe("UploadCarImagesController (unit)", () => {
 
     await controller.handle(req, res);
 
-  // Verifica se as imagens foram salvas no repositório in-memory
+  // Verify images were saved in the in-memory repository
   const images = carsImagesRepositoryInMemory.getImagesByCarId("123");
   expect(images.map((img: { image_name: string }) => img.image_name)).toEqual(["image1.jpg", "image2.jpg"]);
 
-  // Verifica se os arquivos foram salvos no storage in-memory
+  // Verify the files were saved in the in-memory storage
   expect(storageProviderInMemory.getFiles("cars")).toEqual(["image1.jpg", "image2.jpg"]);
 
   expect(res.status).toHaveBeenCalledWith(201);

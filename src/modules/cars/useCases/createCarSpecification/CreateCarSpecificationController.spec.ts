@@ -55,7 +55,7 @@ describe("CreateCarSpecificationController (unit)", () => {
   it("should resolve CreateCarSpecificationUseCase from container if not provided", () => {
     const mockUseCase = { execute: jest.fn() };
     const spyResolve = jest.spyOn(container, "resolve").mockReturnValue(mockUseCase as any);
-    const controller = new CreateCarSpecificationController(); // sem argumento
+    const controller = new CreateCarSpecificationController(); // no argument
     expect(spyResolve).toHaveBeenCalledWith(CreateCarSpecificationUseCase);
     expect(controller).toBeInstanceOf(CreateCarSpecificationController);
     jest.restoreAllMocks();

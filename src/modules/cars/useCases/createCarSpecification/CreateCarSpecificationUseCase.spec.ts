@@ -82,7 +82,7 @@ describe("Create Car Specification", () => {
     });
 
     it("should fill default values when car properties are missing", async () => {
-      // Cria um carro com propriedades faltando
+      // Create a car with missing properties
       const car = await carsRepositoryInMemory.create({
         name: undefined as any,
         description: undefined as any,
@@ -109,7 +109,7 @@ describe("Create Car Specification", () => {
 
       expect(spyCreate).toHaveBeenCalled();
 
-      // Verifica se os defaults foram realmente aplicados
+      // Verify that the defaults were actually applied
       const [arg] = spyCreate.mock.calls[0];
       expect(arg.name).toBe('');
       expect(arg.daily_rate).toBe(0);

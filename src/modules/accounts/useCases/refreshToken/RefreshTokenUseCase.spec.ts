@@ -20,7 +20,7 @@ describe("RefreshTokenUseCase", () => {
       refresh_token,
       expires_date: dateProvider.addDays(auth.expires_refresh_token_days),
     });
-    // Executa o use case e aguarda todas as promessas
+    // Execute the use case and await all promises
     const result = await refreshTokenUseCase.execute(refresh_token);
     expect(result).toHaveProperty("token");
     expect(result).toHaveProperty("refresh_token");
@@ -80,17 +80,17 @@ describe("RefreshTokenUseCase", () => {
   });
 
     it("should throw error if JWT is invalid", async () => {
-      // Token malformado
+      // Token malformed
       await expect(refreshTokenUseCase.execute("not.a.jwt.token")).rejects.toThrow();
     });
 
     it("should throw error if JWT is expired", async () => {
       const user_id = "expired-user";
       const email = "expired@usecase.com";
-      // Cria token já expirado
+      // Create already-expired token
       const expired_token = sign({ email }, auth.secret_refresh_token, {
         subject: user_id,
-        expiresIn: -10, // Expirado
+        expiresIn: -10, // Expired
       });
       await usersTokensRepositoryInMemory.create({
         user_id,
@@ -104,13 +104,13 @@ describe("RefreshTokenUseCase", () => {
       const user_id = "not-stored-user";
       const email = "notstored@usecase.com";
 
-      // Gera um JWT de refresh válido, mas NÃO persiste no repositório
+      // Generate a valid refresh JWT but do NOT persist it in the repository
       const validButNotStoredToken = sign({ email }, auth.secret_refresh_token, {
         subject: user_id,
         expiresIn: auth.expires_in_refresh_token,
       });
 
-      // Invoca e captura o erro para assertar tipo e mensagem (evita executar a função duas vezes)
+      // Invoke and capture the error to assert type and message (avoids executing the function twice)
       await refreshTokenUseCase.execute(validButNotStoredToken).catch((err) => {
         expect(err).toBeInstanceOf(AppError);
         expect(err.message).toBe("Refresh Token does not exists!");

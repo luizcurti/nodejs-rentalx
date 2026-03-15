@@ -1,9 +1,9 @@
 /**
- * Testes E2E — todas as rotas da API RentalX
- * Executa contra o banco rentx_test (PostgreSQL real via Docker)
+ * E2E Tests — all RentalX API routes
+ * Runs against the rentx_test database (real PostgreSQL via Docker)
  */
 
-// Mocka o EtherealMailProvider para não fazer chamadas à rede
+// Mock EtherealMailProvider to prevent outbound network calls
 jest.mock(
   "@shared/container/providers/MailProvider/implementations/EtherealMailProvider",
   () => ({
@@ -25,25 +25,25 @@ import { app } from "./app";
 import { AppDataSource } from "@config/data-source";
 import { MailProviderInMemory } from "@shared/container/providers/MailProvider/in-memory/MailProviderInMemory";
 
-// Substitui o MailProvider pelo in-memory após os imports serem resolvidos
+// Replace MailProvider with in-memory after imports are resolved
 container.registerInstance("MailProvider", new MailProviderInMemory());
 
 jest.setTimeout(60_000);
 
-// ─── Constantes de teste ───────────────────────────────────────────────
+// ─── Test constants ────────────────────────────────────────────────────────
 const ADMIN_EMAIL = "e2e-admin@rentx.com.br";
 const ADMIN_PASS = "Admin@E2E123";
 const USER_EMAIL = "e2e-user@rentx.com.br";
 const USER_PASS = "User@E2E123";
 
-// ─── Estado compartilhado entre grupos de teste ──────────────────────
+// ─── State shared across test groups ─────────────────────────────────
 let adminToken: string;
 let userToken: string;
 let userRefreshToken: string;
 let sharedCategoryId: string;
 let sharedSpecificationId: string;
 
-// Buffer de imagem JPEG mínima (1×1 px) para testes de upload
+// Minimal 1×1 px JPEG buffer for upload tests
 const TINY_JPEG = Buffer.from(
   "/9j/4AAQSkZJRgABAQEASABIAAD/wAARCAABAAEDASIAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACf/" +
     "EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/" +
@@ -53,7 +53,7 @@ const TINY_JPEG = Buffer.from(
 
 const tmpFolder = path.resolve(__dirname, "..", "..", "..", "..", "tmp");
 
-// ─── Helpers de banco ────────────────────────────────────────────────
+// ─── Database helpers ────────────────────────────────────────────────
 async function clearDB(): Promise<void> {
   const tables = [
     "specifications_cars",
@@ -77,7 +77,7 @@ async function dbRow<T = Record<string, string>>(
   return rows[0] as T | undefined;
 }
 
-// ─── Setup global ─────────────────────────────────────────────────────
+// ─── Global setup ───────────────────────────────────────────────────
 beforeAll(async () => {
   if (!AppDataSource.isInitialized) {
     await AppDataSource.initialize();
@@ -85,12 +85,12 @@ beforeAll(async () => {
   await AppDataSource.runMigrations();
   await clearDB();
 
-  // Garante existência dos diretórios de upload
+  // Ensure upload directories exist
   fs.mkdirSync(tmpFolder, { recursive: true });
   fs.mkdirSync(path.join(tmpFolder, "avatar"), { recursive: true });
   fs.mkdirSync(path.join(tmpFolder, "cars"), { recursive: true });
 
-  // Cria usuário admin diretamente no banco
+  // Insert admin user directly into the database
   const adminId = uuidV4();
   const adminHash = await hash(ADMIN_PASS, 8);
   await AppDataSource.query(`
@@ -98,13 +98,13 @@ beforeAll(async () => {
     VALUES ('${adminId}', 'Admin E2E', '${ADMIN_EMAIL}', '${adminHash}', true, 'ADM0001E2E', now())
   `);
 
-  // Autentica admin
+  // Authenticate admin
   const adminRes = await request(app)
     .post("/sessions")
     .send({ email: ADMIN_EMAIL, password: ADMIN_PASS });
   adminToken = adminRes.body.token;
 
-  // Cria usuário comum via API
+  // Create regular user via API
   await request(app).post("/users").send({
     name: "E2E User",
     email: USER_EMAIL,
@@ -117,21 +117,21 @@ beforeAll(async () => {
   userToken = userRes.body.token;
   userRefreshToken = userRes.body.refresh_token;
 
-  // Cria categoria compartilhada (usada nos testes de carro)
+  // Create shared category (used in car tests)
   await request(app)
     .post("/categories")
     .set("Authorization", `Bearer ${adminToken}`)
-    .send({ name: "E2E-Shared-Cat", description: "Categoria compartilhada E2E" });
+    .send({ name: "E2E-Shared-Cat", description: "E2E Shared Category" });
   const catRow = await dbRow<{ id: string }>(
     `SELECT id FROM categories WHERE name = 'E2E-Shared-Cat' LIMIT 1`
   );
   sharedCategoryId = (catRow as { id: string }).id;
 
-  // Cria especificação compartilhada (usada nos testes de carro)
+  // Create shared specification (used in car tests)
   await request(app)
     .post("/specifications")
     .set("Authorization", `Bearer ${adminToken}`)
-    .send({ name: "E2E-Shared-Spec", description: "Spec compartilhada E2E" });
+    .send({ name: "E2E-Shared-Spec", description: "E2E Shared Specification" });
   const specRow = await dbRow<{ id: string }>(
     `SELECT id FROM specifications WHERE name = 'E2E-Shared-Spec' LIMIT 1`
   );
@@ -153,8 +153,8 @@ afterAll(async () => {
 // ══════════════════════════════════════════════════════════════════════
 //  POST /sessions
 // ══════════════════════════════════════════════════════════════════════
-describe("POST /sessions — autenticar usuário", () => {
-  it("entrada válida → 200 + token + refresh_token + user.{name,email}", async () => {
+describe("POST /sessions — authenticate user", () => {
+  it("valid input → 200 + token + refresh_token + user.{name,email}", async () => {
     const res = await request(app)
       .post("/sessions")
       .send({ email: ADMIN_EMAIL, password: ADMIN_PASS });
@@ -167,24 +167,24 @@ describe("POST /sessions — autenticar usuário", () => {
     });
   });
 
-  it("senha errada → 400 + mensagem de erro", async () => {
+  it("wrong password → 400 + error message", async () => {
     const res = await request(app)
       .post("/sessions")
-      .send({ email: ADMIN_EMAIL, password: "senhaerrada" });
+      .send({ email: ADMIN_EMAIL, password: "wrongpassword" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Email or password incorrect!");
   });
 
-  it("email inexistente → 400", async () => {
+  it("non-existent email → 400", async () => {
     const res = await request(app)
       .post("/sessions")
-      .send({ email: "naoexiste@rentx.com.br", password: "qualquer" });
+      .send({ email: "nonexistent@rentx.com.br", password: "anypass" });
 
     expect(res.status).toBe(400);
   });
 
-  it("sem email → 400", async () => {
+  it("missing email → 400", async () => {
     const res = await request(app)
       .post("/sessions")
       .send({ password: ADMIN_PASS });
@@ -192,7 +192,7 @@ describe("POST /sessions — autenticar usuário", () => {
     expect(res.status).toBe(400);
   });
 
-  it("sem senha → 400", async () => {
+  it("missing password → 400", async () => {
     const res = await request(app)
       .post("/sessions")
       .send({ email: ADMIN_EMAIL });
@@ -200,7 +200,7 @@ describe("POST /sessions — autenticar usuário", () => {
     expect(res.status).toBe(400);
   });
 
-  it("body vazio → 400", async () => {
+  it("empty body → 400", async () => {
     const res = await request(app).post("/sessions").send({});
     expect(res.status).toBe(400);
   });
@@ -209,8 +209,8 @@ describe("POST /sessions — autenticar usuário", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  POST /refresh-token
 // ══════════════════════════════════════════════════════════════════════
-describe("POST /refresh-token — renovar token", () => {
-  it("refresh_token válido (body) → 200 + novo token + novo refresh_token", async () => {
+describe("POST /refresh-token — renew token", () => {
+  it("valid refresh_token (body) → 200 + new token + new refresh_token", async () => {
     const res = await request(app)
       .post("/refresh-token")
       .send({ token: userRefreshToken });
@@ -220,7 +220,7 @@ describe("POST /refresh-token — renovar token", () => {
       token: expect.any(String),
       refresh_token: expect.any(String),
     });
-    // Atualiza tokens para os próximos testes
+    // Update tokens for subsequent tests
     userToken = res.body.token;
     userRefreshToken = res.body.refresh_token;
   });
@@ -235,15 +235,15 @@ describe("POST /refresh-token — renovar token", () => {
     userRefreshToken = res.body.refresh_token;
   });
 
-  it("token inválido → 401", async () => {
+  it("invalid token → 401", async () => {
     const res = await request(app)
       .post("/refresh-token")
-      .send({ token: "token.invalido.aqui" });
+      .send({ token: "invalid.token.here" });
 
     expect(res.status).toBe(401);
   });
 
-  it("sem token → 400", async () => {
+  it("missing token → 400", async () => {
     const res = await request(app).post("/refresh-token").send({});
     expect(res.status).toBe(400);
   });
@@ -252,23 +252,23 @@ describe("POST /refresh-token — renovar token", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  POST /users
 // ══════════════════════════════════════════════════════════════════════
-describe("POST /users — criar usuário", () => {
-  it("dados válidos → 201 sem body", async () => {
+describe("POST /users — create user", () => {
+  it("valid data → 201 with no body", async () => {
     const res = await request(app).post("/users").send({
-      name: "Novo Usuário E2E",
-      email: `novo-${uuidV4()}@rentx.com.br`,
-      password: "Senha@123",
+      name: "New E2E User",
+      email: `new-${uuidV4()}@rentx.com.br`,
+      password: "Pass@123",
       driver_license: `NEW${Date.now()}`,
     });
 
     expect(res.status).toBe(201);
   });
 
-  it("email duplicado → 400 + mensagem", async () => {
+  it("duplicate email → 400 + message", async () => {
     const res = await request(app).post("/users").send({
-      name: "Duplicado",
-      email: USER_EMAIL, // já existe
-      password: "Senha@123",
+      name: "Duplicate",
+      email: USER_EMAIL, // already exists
+      password: "Pass@123",
       driver_license: "DUP0001E2E",
     });
 
@@ -276,14 +276,14 @@ describe("POST /users — criar usuário", () => {
     expect(res.body.message).toBe("User already exists");
   });
 
-  it("senha ausente não cria usuário com dados incompletos", async () => {
+  it("missing password does not create user with incomplete data", async () => {
     const res = await request(app).post("/users").send({
-      name: "Sem Senha",
-      email: `semsenha-${uuidV4()}@rentx.com.br`,
+      name: "No Password",
+      email: `nopassword-${uuidV4()}@rentx.com.br`,
       driver_license: "SEM0001",
     });
 
-    // Pode retornar 400 ou 500 dependendo da validação
+    // Can return 400 or 500 depending on validation
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 });
@@ -291,8 +291,8 @@ describe("POST /users — criar usuário", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  GET /users/profile
 // ══════════════════════════════════════════════════════════════════════
-describe("GET /users/profile — perfil autenticado", () => {
-  it("token válido → 200 + dados do usuário", async () => {
+describe("GET /users/profile — authenticated profile", () => {
+  it("valid token → 200 + user data", async () => {
     const res = await request(app)
       .get("/users/profile")
       .set("Authorization", `Bearer ${userToken}`);
@@ -306,20 +306,20 @@ describe("GET /users/profile — perfil autenticado", () => {
     expect(res.body).toHaveProperty("avatar_url");
   });
 
-  it("sem token → 401", async () => {
+  it("missing token → 401", async () => {
     const res = await request(app).get("/users/profile");
     expect(res.status).toBe(401);
   });
 
-  it("token malformado → 401", async () => {
+  it("malformed token → 401", async () => {
     const res = await request(app)
       .get("/users/profile")
-      .set("Authorization", "Bearer token.invalido");
+      .set("Authorization", "Bearer invalid.token");
 
     expect(res.status).toBe(401);
   });
 
-  it("header Authorization ausente → 401", async () => {
+  it("missing Authorization header → 401", async () => {
     const res = await request(app)
       .get("/users/profile")
       .set("Authorization", "");
@@ -331,7 +331,7 @@ describe("GET /users/profile — perfil autenticado", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  PATCH /users/avatar
 // ══════════════════════════════════════════════════════════════════════
-describe("PATCH /users/avatar — atualizar avatar", () => {
+describe("PATCH /users/avatar — update avatar", () => {
   const srcJpeg = path.join(tmpFolder, "e2e-avatar-src.jpg");
 
   beforeAll(() => {
@@ -342,7 +342,7 @@ describe("PATCH /users/avatar — atualizar avatar", () => {
     if (fs.existsSync(srcJpeg)) fs.unlinkSync(srcJpeg);
   });
 
-  it("token válido + arquivo → 204", async () => {
+  it("valid token + file → 204", async () => {
     const res = await request(app)
       .patch("/users/avatar")
       .set("Authorization", `Bearer ${userToken}`)
@@ -351,7 +351,7 @@ describe("PATCH /users/avatar — atualizar avatar", () => {
     expect(res.status).toBe(204);
   });
 
-  it("sem arquivo → 400", async () => {
+  it("missing file → 400", async () => {
     const res = await request(app)
       .patch("/users/avatar")
       .set("Authorization", `Bearer ${userToken}`);
@@ -359,7 +359,7 @@ describe("PATCH /users/avatar — atualizar avatar", () => {
     expect(res.status).toBe(400);
   });
 
-  it("sem token → 401", async () => {
+  it("missing token → 401", async () => {
     const res = await request(app).patch("/users/avatar");
     expect(res.status).toBe(401);
   });
@@ -368,27 +368,27 @@ describe("PATCH /users/avatar — atualizar avatar", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  POST /categories  +  GET /categories  +  POST /categories/import
 // ══════════════════════════════════════════════════════════════════════
-describe("Categorias", () => {
+describe("Categories", () => {
   const csvPath = path.join(tmpFolder, "e2e-categories.csv");
 
   beforeAll(() => {
-    fs.writeFileSync(csvPath, "name,description\nE2E-CSV-Hatch,Carros hatch\nE2E-CSV-Sedan,Carros sedan\n");
+    fs.writeFileSync(csvPath, "name,description\nE2E-CSV-Hatch,Hatchback cars\nE2E-CSV-Sedan,Sedan cars\n");
   });
   afterAll(() => {
     if (fs.existsSync(csvPath)) fs.unlinkSync(csvPath);
   });
 
   describe("POST /categories", () => {
-    it("admin + dados válidos → 201", async () => {
+    it("admin + valid data → 201", async () => {
       const res = await request(app)
         .post("/categories")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "SUV-E2E", description: "Categoria SUV" });
+        .send({ name: "SUV-E2E", description: "SUV Category" });
 
       expect(res.status).toBe(201);
     });
 
-    it("admin + nome duplicado → 400", async () => {
+    it("admin + duplicate name → 400", async () => {
       await request(app)
         .post("/categories")
         .set("Authorization", `Bearer ${adminToken}`)
@@ -397,32 +397,32 @@ describe("Categorias", () => {
       const res = await request(app)
         .post("/categories")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "SEDAN-E2E", description: "Duplicado" });
+        .send({ name: "SEDAN-E2E", description: "Duplicate" });
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe("Category already exists!");
     });
 
-    it("usuário não-admin → 403", async () => {
+    it("non-admin user → 403", async () => {
       const res = await request(app)
         .post("/categories")
         .set("Authorization", `Bearer ${userToken}`)
-        .send({ name: "SemPermissao", description: "X" });
+        .send({ name: "NoPermission", description: "X" });
 
       expect(res.status).toBe(403);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app)
         .post("/categories")
-        .send({ name: "SemAuth", description: "X" });
+        .send({ name: "NoAuth", description: "X" });
 
       expect(res.status).toBe(401);
     });
   });
 
   describe("GET /categories", () => {
-    it("sem autenticação → 200 + array com ao menos 1 item", async () => {
+    it("no authentication → 200 + array with at least 1 item", async () => {
       const res = await request(app).get("/categories");
 
       expect(res.status).toBe(200);
@@ -430,7 +430,7 @@ describe("Categorias", () => {
       expect(res.body.length).toBeGreaterThan(0);
     });
 
-    it("cada item contém id, name e description", async () => {
+    it("each item contains id, name and description", async () => {
       const res = await request(app).get("/categories");
 
       expect(res.status).toBe(200);
@@ -442,8 +442,8 @@ describe("Categorias", () => {
     });
   });
 
-  describe("POST /categories/import — importar CSV", () => {
-    it("admin + CSV válido → 201", async () => {
+  describe("POST /categories/import — import CSV", () => {
+    it("admin + valid CSV → 201", async () => {
       const res = await request(app)
         .post("/categories/import")
         .set("Authorization", `Bearer ${adminToken}`)
@@ -452,7 +452,7 @@ describe("Categorias", () => {
       expect(res.status).toBe(201);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app)
         .post("/categories/import")
         .attach("file", csvPath);
@@ -460,7 +460,7 @@ describe("Categorias", () => {
       expect(res.status).toBe(401);
     });
 
-    it("não-admin → 403", async () => {
+    it("non-admin → 403", async () => {
       const res = await request(app)
         .post("/categories/import")
         .set("Authorization", `Bearer ${userToken}`)
@@ -474,9 +474,9 @@ describe("Categorias", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  POST /specifications  +  GET /specifications
 // ══════════════════════════════════════════════════════════════════════
-describe("Especificações", () => {
+describe("Specifications", () => {
   describe("POST /specifications", () => {
-    it("admin + dados válidos → 201", async () => {
+    it("admin + valid data → 201", async () => {
       const res = await request(app)
         .post("/specifications")
         .set("Authorization", `Bearer ${adminToken}`)
@@ -485,47 +485,47 @@ describe("Especificações", () => {
       expect(res.status).toBe(201);
     });
 
-    it("admin + nome duplicado → 400", async () => {
+    it("admin + duplicate name → 400", async () => {
       await request(app)
         .post("/specifications")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "GPS-E2E", description: "Navegação" });
+        .send({ name: "GPS-E2E", description: "Navigation" });
 
       const res = await request(app)
         .post("/specifications")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "GPS-E2E", description: "Duplicado" });
+        .send({ name: "GPS-E2E", description: "Duplicate" });
 
       expect(res.status).toBe(400);
     });
 
-    it("usuário não-admin → 403", async () => {
+    it("non-admin user → 403", async () => {
       const res = await request(app)
         .post("/specifications")
         .set("Authorization", `Bearer ${userToken}`)
-        .send({ name: "Proibido", description: "X" });
+        .send({ name: "Forbidden", description: "X" });
 
       expect(res.status).toBe(403);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app)
         .post("/specifications")
-        .send({ name: "SemAuth", description: "X" });
+        .send({ name: "NoAuth", description: "X" });
 
       expect(res.status).toBe(401);
     });
   });
 
   describe("GET /specifications", () => {
-    it("sem autenticação → 200 + array", async () => {
+    it("no authentication → 200 + array", async () => {
       const res = await request(app).get("/specifications");
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
 
-    it("cada item contém id, name, description", async () => {
+    it("each item contains id, name, description", async () => {
       const res = await request(app).get("/specifications");
 
       expect(res.status).toBe(200);
@@ -539,10 +539,10 @@ describe("Especificações", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
-//  Carros — POST /cars | GET /cars/available
+//  Cars — POST /cars | GET /cars/available
 //           POST /cars/specifications/:id | POST /cars/images/:id
 // ══════════════════════════════════════════════════════════════════════
-describe("Carros", () => {
+describe("Cars", () => {
   let carId: string;
   const srcImg = path.join(tmpFolder, "e2e-car-img.jpg");
 
@@ -554,13 +554,13 @@ describe("Carros", () => {
   });
 
   describe("POST /cars", () => {
-    it("admin + dados válidos → 201 + objeto carro com id e available=true", async () => {
+    it("admin + valid data → 201 + car object with id and available=true", async () => {
       const res = await request(app)
         .post("/cars")
         .set("Authorization", `Bearer ${adminToken}`)
         .send({
           name: "Fusion E2E",
-          description: "Sedan executivo E2E",
+          description: "Executive Sedan E2E",
           daily_rate: 150,
           license_plate: "E2E-0001",
           fine_amount: 50,
@@ -579,15 +579,15 @@ describe("Carros", () => {
       carId = res.body.id;
     });
 
-    it("admin + placa duplicada → 400", async () => {
+    it("admin + duplicate license plate → 400", async () => {
       const res = await request(app)
         .post("/cars")
         .set("Authorization", `Bearer ${adminToken}`)
         .send({
-          name: "Duplicado",
-          description: "Duplicado",
+          name: "Duplicate",
+          description: "Duplicate",
           daily_rate: 100,
-          license_plate: "E2E-0001", // já existe
+          license_plate: "E2E-0001", // already exists
           fine_amount: 30,
           brand: "Ford",
           category_id: sharedCategoryId,
@@ -597,12 +597,12 @@ describe("Carros", () => {
       expect(res.body.message).toBe("Car already exists!");
     });
 
-    it("usuário não-admin → 403", async () => {
+    it("non-admin user → 403", async () => {
       const res = await request(app)
         .post("/cars")
         .set("Authorization", `Bearer ${userToken}`)
         .send({
-          name: "Proibido",
+          name: "Forbidden",
           description: "X",
           daily_rate: 100,
           license_plate: "E2E-9999",
@@ -614,9 +614,9 @@ describe("Carros", () => {
       expect(res.status).toBe(403);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app).post("/cars").send({
-        name: "SemAuth",
+        name: "NoAuth",
         license_plate: "E2E-8888",
       });
 
@@ -625,14 +625,14 @@ describe("Carros", () => {
   });
 
   describe("GET /cars/available", () => {
-    it("sem autenticação → 200 + array", async () => {
+    it("no authentication → 200 + array", async () => {
       const res = await request(app).get("/cars/available");
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
 
-    it("carro criado acima aparece na listagem", async () => {
+    it("car created above appears in the listing", async () => {
       const res = await request(app).get("/cars/available");
 
       expect(res.status).toBe(200);
@@ -640,7 +640,7 @@ describe("Carros", () => {
       expect(found).toBeDefined();
     });
 
-    it("filtro por brand → apenas carros da marca", async () => {
+    it("filter by brand → only cars of that brand", async () => {
       const res = await request(app)
         .get("/cars/available")
         .query({ brand: "Ford" });
@@ -652,7 +652,7 @@ describe("Carros", () => {
       );
     });
 
-    it("filtro por category_id → apenas carros da categoria", async () => {
+    it("filter by category_id → only cars in that category", async () => {
       const res = await request(app)
         .get("/cars/available")
         .query({ category_id: sharedCategoryId });
@@ -663,7 +663,7 @@ describe("Carros", () => {
       );
     });
 
-    it("filtro por name → apenas carros com esse nome", async () => {
+    it("filter by name → only cars with that name", async () => {
       const res = await request(app)
         .get("/cars/available")
         .query({ name: "Fusion E2E" });
@@ -675,7 +675,7 @@ describe("Carros", () => {
       );
     });
 
-    it("paginação (page=1, limit=1) → array com 1 item", async () => {
+    it("pagination (page=1, limit=1) → array with 1 item", async () => {
       const res = await request(app)
         .get("/cars/available")
         .query({ page: 1, limit: 1 });
@@ -686,7 +686,7 @@ describe("Carros", () => {
   });
 
   describe("POST /cars/specifications/:id", () => {
-    it("admin + car_id válido + spec → 200 + carro com specifications[]", async () => {
+    it("admin + valid car_id + spec → 200 + car with specifications[]", async () => {
       const res = await request(app)
         .post(`/cars/specifications/${carId}`)
         .set("Authorization", `Bearer ${adminToken}`)
@@ -697,7 +697,7 @@ describe("Carros", () => {
       expect(res.body.specifications.length).toBeGreaterThan(0);
     });
 
-    it("car_id inexistente → 400", async () => {
+    it("non-existent car_id → 400", async () => {
       const res = await request(app)
         .post(`/cars/specifications/${uuidV4()}`)
         .set("Authorization", `Bearer ${adminToken}`)
@@ -706,7 +706,7 @@ describe("Carros", () => {
       expect(res.status).toBe(400);
     });
 
-    it("não-admin → 403", async () => {
+    it("non-admin → 403", async () => {
       const res = await request(app)
         .post(`/cars/specifications/${carId}`)
         .set("Authorization", `Bearer ${userToken}`)
@@ -715,7 +715,7 @@ describe("Carros", () => {
       expect(res.status).toBe(403);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app)
         .post(`/cars/specifications/${carId}`)
         .send({ specifications_id: [sharedSpecificationId] });
@@ -725,7 +725,7 @@ describe("Carros", () => {
   });
 
   describe("POST /cars/images/:id", () => {
-    it("admin + arquivo de imagem → 201", async () => {
+    it("admin + image file → 201", async () => {
       const res = await request(app)
         .post(`/cars/images/${carId}`)
         .set("Authorization", `Bearer ${adminToken}`)
@@ -734,7 +734,7 @@ describe("Carros", () => {
       expect(res.status).toBe(201);
     });
 
-    it("não-admin → 403", async () => {
+    it("non-admin → 403", async () => {
       const res = await request(app)
         .post(`/cars/images/${carId}`)
         .set("Authorization", `Bearer ${userToken}`)
@@ -743,7 +743,7 @@ describe("Carros", () => {
       expect(res.status).toBe(403);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app).post(`/cars/images/${carId}`);
       expect(res.status).toBe(401);
     });
@@ -751,9 +751,9 @@ describe("Carros", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════
-//  Aluguéis — POST /rentals | GET /rentals/user | PATCH /rentals/devolution/:id
+//  Rentals — POST /rentals | GET /rentals/user | PATCH /rentals/devolution/:id
 // ══════════════════════════════════════════════════════════════════════
-describe("Aluguéis", () => {
+describe("Rentals", () => {
   let rentalCarId: string;
   let rentalId: string;
 
@@ -763,13 +763,13 @@ describe("Aluguéis", () => {
     new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString();
 
   beforeAll(async () => {
-    // Cria carro dedicado ao fluxo de aluguel
+    // Create dedicated car for rental flow
     const carRes = await request(app)
       .post("/cars")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({
         name: "Rental Car E2E",
-        description: "Carro para testes de aluguel",
+        description: "Car for rental tests",
         daily_rate: 100,
         license_plate: `RNT-${Date.now()}`,
         fine_amount: 50,
@@ -779,8 +779,8 @@ describe("Aluguéis", () => {
     rentalCarId = carRes.body.id;
   });
 
-  describe("POST /rentals — criar aluguel", () => {
-    it("entrada inválida: sem expected_return_date → 400", async () => {
+  describe("POST /rentals — create rental", () => {
+    it("invalid input: missing expected_return_date → 400", async () => {
       const res = await request(app)
         .post("/rentals")
         .set("Authorization", `Bearer ${userToken}`)
@@ -790,17 +790,17 @@ describe("Aluguéis", () => {
       expect(res.body.message).toBe("expected_return_date is required!");
     });
 
-    it("entrada inválida: data malformada → 400", async () => {
+    it("invalid input: malformed date → 400", async () => {
       const res = await request(app)
         .post("/rentals")
         .set("Authorization", `Bearer ${userToken}`)
-        .send({ car_id: rentalCarId, expected_return_date: "nao-e-uma-data" });
+        .send({ car_id: rentalCarId, expected_return_date: "not-a-date" });
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe("expected_return_date is not a valid date!");
     });
 
-    it("data < 24h → 400 (período mínimo não atendido)", async () => {
+    it("date < 24h → 400 (minimum period not met)", async () => {
       const res = await request(app)
         .post("/rentals")
         .set("Authorization", `Bearer ${userToken}`)
@@ -809,7 +809,7 @@ describe("Aluguéis", () => {
       expect(res.status).toBe(400);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app)
         .post("/rentals")
         .send({ car_id: rentalCarId, expected_return_date: expectedReturn48h() });
@@ -817,7 +817,7 @@ describe("Aluguéis", () => {
       expect(res.status).toBe(401);
     });
 
-    it("dados válidos → 201 + objeto rental com car_id e user_id", async () => {
+    it("valid data → 201 + rental object with car_id and user_id", async () => {
       const res = await request(app)
         .post("/rentals")
         .set("Authorization", `Bearer ${userToken}`)
@@ -833,17 +833,17 @@ describe("Aluguéis", () => {
       expect(res.body.expected_return_date).toBeDefined();
     });
 
-    it("carro já alugado → outro usuário tenta → 400", async () => {
-      const otherEmail = `outro-${uuidV4()}@rentx.com.br`;
+    it("car already rented → another user tries → 400", async () => {
+      const otherEmail = `other-${uuidV4()}@rentx.com.br`;
       await request(app).post("/users").send({
-        name: "Outro User",
+        name: "Other User",
         email: otherEmail,
-        password: "Outro@123",
+        password: "Other@123",
         driver_license: `OTR${Date.now()}`,
       });
       const outroAuth = await request(app)
         .post("/sessions")
-        .send({ email: otherEmail, password: "Outro@123" });
+        .send({ email: otherEmail, password: "Other@123" });
       const outroToken = outroAuth.body.token;
 
       const res = await request(app)
@@ -854,33 +854,33 @@ describe("Aluguéis", () => {
       expect(res.status).toBe(400);
     });
 
-    it("usuário já possui aluguel aberto → 400", async () => {
-      // Cria outro carro disponível
+    it("user already has an open rental → 400", async () => {
+      // Create another available car
       const anotherCarRes = await request(app)
         .post("/cars")
         .set("Authorization", `Bearer ${adminToken}`)
         .send({
-          name: "Outro Carro",
-          description: "outro",
+          name: "Another Car",
+          description: "other",
           daily_rate: 80,
           license_plate: `OTR-${Date.now()}`,
           fine_amount: 20,
-          brand: "OutraBrand",
+          brand: "OtherBrand",
           category_id: sharedCategoryId,
         });
       const anotherCarId = anotherCarRes.body.id;
 
       const res = await request(app)
         .post("/rentals")
-        .set("Authorization", `Bearer ${userToken}`) // userToken já tem aluguel aberto
+        .set("Authorization", `Bearer ${userToken}`) // userToken already has an open rental
         .send({ car_id: anotherCarId, expected_return_date: expectedReturn48h() });
 
       expect(res.status).toBe(400);
     });
   });
 
-  describe("GET /rentals/user — listar aluguéis do usuário", () => {
-    it("usuário autenticado → 200 + array com ao menos 1 aluguel", async () => {
+  describe("GET /rentals/user — list user rentals", () => {
+    it("authenticated user → 200 + array with at least 1 rental", async () => {
       const res = await request(app)
         .get("/rentals/user")
         .set("Authorization", `Bearer ${userToken}`);
@@ -890,7 +890,7 @@ describe("Aluguéis", () => {
       expect(res.body.length).toBeGreaterThan(0);
     });
 
-    it("aluguel retornado contém campos esperados", async () => {
+    it("returned rental contains expected fields", async () => {
       const res = await request(app)
         .get("/rentals/user")
         .set("Authorization", `Bearer ${userToken}`);
@@ -905,14 +905,14 @@ describe("Aluguéis", () => {
       });
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app).get("/rentals/user");
       expect(res.status).toBe(401);
     });
   });
 
-  describe("PATCH /rentals/devolution/:id — devolução do carro", () => {
-    it("token válido + rental_id válido → 200 + rental com total e end_date", async () => {
+  describe("PATCH /rentals/devolution/:id — car return", () => {
+    it("valid token + valid rental_id → 200 + rental with total and end_date", async () => {
       const res = await request(app)
         .patch(`/rentals/devolution/${rentalId}`)
         .set("Authorization", `Bearer ${userToken}`);
@@ -927,16 +927,16 @@ describe("Aluguéis", () => {
       expect(res.body.end_date).toBeDefined();
     });
 
-    it("rental_id inexistente (string não-UUID) → mantém integridade → 400 ou 500", async () => {
+    it("non-existent rental_id (non-UUID string) → preserves integrity → 400 or 500", async () => {
       const res = await request(app)
         .patch(`/rentals/devolution/00000000-0000-0000-0000-000000000000`)
         .set("Authorization", `Bearer ${userToken}`);
 
-      // rental inexistente → AppError 400 ou erro DB
+      // non-existent rental → AppError 400 or DB error
       expect([400, 500]).toContain(res.status);
     });
 
-    it("rental_id inexistente → 400", async () => {
+    it("non-existent rental_id → 400", async () => {
       const res = await request(app)
         .patch(`/rentals/devolution/${uuidV4()}`)
         .set("Authorization", `Bearer ${userToken}`);
@@ -944,7 +944,7 @@ describe("Aluguéis", () => {
       expect(res.status).toBe(400);
     });
 
-    it("sem token → 401", async () => {
+    it("missing token → 401", async () => {
       const res = await request(app).patch(`/rentals/devolution/${rentalId}`);
       expect(res.status).toBe(401);
     });
@@ -954,10 +954,10 @@ describe("Aluguéis", () => {
 // ══════════════════════════════════════════════════════════════════════
 //  POST /password/forgot  +  POST /password/reset
 // ══════════════════════════════════════════════════════════════════════
-describe("Recuperação de senha", () => {
+describe("Password Recovery", () => {
   const forgotEmail = `forgot-${uuidV4()}@rentx.com.br`;
-  const forgotPass = "SenhaAntiga@123";
-  const newPass = "SenhaNova@456";
+  const forgotPass = "OldPassword@123";
+  const newPass = "NewPassword@456";
   let forgotToken: string;
 
   beforeAll(async () => {
@@ -970,14 +970,14 @@ describe("Recuperação de senha", () => {
   });
 
   describe("POST /password/forgot", () => {
-    it("email cadastrado → 200 + cria registro em users_tokens", async () => {
+    it("registered email → 200 + creates record in users_tokens", async () => {
       const res = await request(app)
         .post("/password/forgot")
         .send({ email: forgotEmail });
 
       expect(res.status).toBe(200);
 
-      // Verifica que o token foi criado no banco
+      // Verify token was created in the database
       const userRow = await dbRow<{ id: string }>(
         `SELECT id FROM users WHERE email = '${forgotEmail}' LIMIT 1`
       );
@@ -990,23 +990,23 @@ describe("Recuperação de senha", () => {
       forgotToken = (tokenRow as { refresh_token: string }).refresh_token;
     });
 
-    it("email NÃO cadastrado → 200 (sem revelar enumeração de usuários)", async () => {
+    it("unregistered email → 200 (no user enumeration)", async () => {
       const res = await request(app)
         .post("/password/forgot")
-        .send({ email: `naoexiste-${uuidV4()}@rentx.com.br` });
+        .send({ email: `nonexistent-${uuidV4()}@rentx.com.br` });
 
       expect(res.status).toBe(200);
     });
 
-    it("sem campo email → 200 (comportamento defensivo)", async () => {
+    it("missing email field → 200 (defensive behaviour)", async () => {
       const res = await request(app).post("/password/forgot").send({});
-      // Aceita 200 ou 400 dependendo da implementação
+      // Accepts 200 or 400 depending on implementation
       expect([200, 400]).toContain(res.status);
     });
   });
 
   describe("POST /password/reset", () => {
-    it("token válido + nova senha → 200 + login funciona com nova senha", async () => {
+    it("valid token + new password → 200 + login works with new password", async () => {
       const res = await request(app)
         .post("/password/reset")
         .query({ token: forgotToken })
@@ -1014,7 +1014,7 @@ describe("Recuperação de senha", () => {
 
       expect(res.status).toBe(200);
 
-      // Verifica que o login com a nova senha é bem-sucedido
+      // Verify login works with the new password
       const loginRes = await request(app)
         .post("/sessions")
         .send({ email: forgotEmail, password: newPass });
@@ -1023,30 +1023,30 @@ describe("Recuperação de senha", () => {
       expect(loginRes.body).toHaveProperty("token");
     });
 
-    it("token já utilizado → 400", async () => {
-      // O token foi invalidado na operação anterior
+    it("already-used token → 400", async () => {
+      // Token was invalidated in the previous operation
       const res = await request(app)
         .post("/password/reset")
         .query({ token: forgotToken })
-        .send({ password: "OutraSenha@789" });
+        .send({ password: "AnotherPassword@789" });
 
       expect(res.status).toBe(400);
     });
 
-    it("token inexistente → 400 + mensagem", async () => {
+    it("non-existent token → 400 + message", async () => {
       const res = await request(app)
         .post("/password/reset")
         .query({ token: uuidV4() })
-        .send({ password: "OutraSenha@789" });
+        .send({ password: "AnotherPassword@789" });
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe("Token invalid!");
     });
 
-    it("sem token na query → 400", async () => {
+    it("missing token in query → 400", async () => {
       const res = await request(app)
         .post("/password/reset")
-        .send({ password: "SemToken@123" });
+        .send({ password: "NoToken@123" });
 
       expect(res.status).toBe(400);
     });

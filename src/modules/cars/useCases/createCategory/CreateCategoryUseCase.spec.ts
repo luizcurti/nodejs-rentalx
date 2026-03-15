@@ -30,7 +30,7 @@ describe("CreateCategoryUseCase (unit)", () => {
       .rejects
       .toEqual(new AppError("Category already exists!"));
 
-    // Garante que não foi criada uma nova categoria
+    // Ensure no new category was created
     const all = await categoriesRepositoryInMemory.list();
     expect(all.filter(c => c.name === "SUV").length).toBe(1);
   });

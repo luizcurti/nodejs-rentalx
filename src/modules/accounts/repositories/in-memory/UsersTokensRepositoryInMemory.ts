@@ -33,7 +33,7 @@ class UsersTokensRepositoryInMemory implements IUsersTokensRepository {
   async deleteById(id: string): Promise<void> {
     const userToken = this.usersTokens.find((ut) => ut.id === id);
     if (!userToken) {
-      // Não lança erro, apenas retorna (simula comportamento silencioso do TypeORM)
+      // Does not throw, just returns (mimics TypeORM silent behaviour)
       return;
     }
     const index = this.usersTokens.indexOf(userToken);

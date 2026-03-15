@@ -42,7 +42,7 @@ describe("CreateSpecificationController (unit)", () => {
 
     await controller.handle(req, res);
 
-    // Verifica se a specification foi criada no repo in-memory
+    // Verify the specification was created in the in-memory repo
     const spec = await specificationsRepositoryInMemory.findByName("Spec1");
     expect(spec).toBeDefined();
     expect(spec?.description).toBe("Desc1");

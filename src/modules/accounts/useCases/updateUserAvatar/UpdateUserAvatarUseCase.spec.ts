@@ -74,7 +74,7 @@ describe("UpdateUserAvatarUseCase", () => {
   });
 
   it("should cover ?? '' defaults when user fields are undefined", async () => {
-    // cria usuário com todos os campos undefined para forçar uso do ??
+    // create user with all fields undefined to force ?? fallback
     const user = await usersRepositoryInMemory.create({
       driver_license: undefined as any,
       email: undefined as any,

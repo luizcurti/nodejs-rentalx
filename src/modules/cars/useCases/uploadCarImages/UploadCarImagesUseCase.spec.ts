@@ -22,11 +22,11 @@ describe("UploadCarImagesUseCase (unit)", () => {
 
     await useCase.execute(data);
 
-    // Verifica se as imagens foram salvas no repositório in-memory
+    // Verify images were saved in the in-memory repository
     const images = carsImagesRepositoryInMemory.getImagesByCarId("123");
     expect(images.map(img => img.image_name)).toEqual(["image1.jpg", "image2.jpg"]);
 
-    // Verifica se os arquivos foram salvos no storage in-memory
+    // Verify the files were saved in the in-memory storage
     expect(storageProviderInMemory.getFiles("cars")).toEqual(["image1.jpg", "image2.jpg"]);
   });
 });

@@ -14,7 +14,7 @@ describe("ListRentalsByUserController (unit)", () => {
   beforeEach(() => {
     rentalsRepositoryInMemory = new RentalsRepositoryInMemory();
     useCase = new ListRentalsByUserUseCase(rentalsRepositoryInMemory);
-    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
+    // Mock container.resolve before creating the controller to support the constructor DI pattern
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === ListRentalsByUserUseCase) {
         return useCase;
@@ -35,7 +35,7 @@ describe("ListRentalsByUserController (unit)", () => {
   }
 
   it("should call use case with user id and return rentals, using in-memory repo", async () => {
-    // Adiciona rental
+    // Add rental
     await rentalsRepositoryInMemory.create({
       car_id: "car1",
       user_id: "user1",

@@ -66,8 +66,8 @@ describe("CreateCarController (unit)", () => {
   it("should resolve CreateCarUseCase from container if not provided", () => {
     const mockUseCase = { execute: jest.fn() };
     const spyResolve = jest.spyOn(container, "resolve").mockImplementation(() => mockUseCase as any);
-    // Instancia o controller enquanto o mock está ativo
-    const controller = new CreateCarController(); // sem argumento
+    // Instantiate the controller while the mock is active
+    const controller = new CreateCarController(); // no argument
     expect(spyResolve).toHaveBeenCalledWith(CreateCarUseCase);
     expect(controller).toBeInstanceOf(CreateCarController);
     spyResolve.mockRestore();

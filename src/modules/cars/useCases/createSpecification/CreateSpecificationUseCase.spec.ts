@@ -28,7 +28,7 @@ describe("CreateSpecificationUseCase (unit)", () => {
       .rejects
       .toEqual(new AppError("Specification already exists!"));
 
-    // Garante que não foi criada uma nova specification
+    // Ensure no new specification was created
     const all = await specificationsRepositoryInMemory.findByName("Spec1");
     expect(all).toBeDefined();
   });

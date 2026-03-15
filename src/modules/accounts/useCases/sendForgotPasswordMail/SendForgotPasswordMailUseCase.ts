@@ -32,7 +32,7 @@ class SendForgotPasswordMailUseCase {
       "forgotPassword.hbs"
     );
 
-    // Não revelar se o e-mail está ou não cadastrado (user enumeration)
+    // Do not reveal whether the e-mail is registered (user enumeration)
     if (!user) {
       return;
     }
@@ -54,7 +54,7 @@ class SendForgotPasswordMailUseCase {
 
     await this.mailProvider.sendMail(
       email,
-      "Recuperação de Senha",
+      "Password Recovery",
       variables,
       templatePath
     );

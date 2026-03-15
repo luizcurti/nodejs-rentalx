@@ -47,7 +47,7 @@ describe("ImportCategoryController (unit)", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: "File is required" });
-    // Não chama o use case
+    // Does not call the use case
   });
 
   it("should call use case and return 201 if file provided, using in-memory repo", async () => {
@@ -55,12 +55,12 @@ describe("ImportCategoryController (unit)", () => {
     const req = mockRequest(file) as Request;
     const res = mockResponse() as Response;
 
-    // Mock loadCategories para não ler arquivo real
+    // Mock loadCategories to avoid reading a real file
     jest.spyOn(useCase, "loadCategories").mockResolvedValue([{ name: "A", description: "desc A" }]);
 
     await controller.handle(req, res);
 
-    // Verifica se a categoria foi criada no repo in-memory
+    // Verify the category was created in the in-memory repo
     const found = await categoriesRepositoryInMemory.findByName("A");
     expect(found).toBeDefined();
     expect(found?.description).toBe("desc A");

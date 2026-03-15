@@ -17,7 +17,7 @@ describe("ImportCategoryUseCase (unit)", () => {
     jest.spyOn(fs, "createReadStream").mockReturnValue({ pipe: jest.fn() } as any);
     const useCaseLocal = new ImportCategoryUseCase(categoriesRepositoryInMemory);
     const unlinkSpy = jest.spyOn(fs.promises, "unlink").mockResolvedValue();
-    // Executa a promise e dispara os eventos manualmente
+    // Execute the promise and manually fire events
     const promise = useCaseLocal.loadCategories(file);
     global.setImmediate(() => {
       parserMock.emit("data", ["cat1", "desc1"]);
@@ -42,7 +42,7 @@ describe("ImportCategoryUseCase (unit)", () => {
   });
 
   it("should call repository create for new categories", async () => {
-    // Mock loadCategories para não ler arquivo real
+    // Mock loadCategories to avoid reading a real file
     const categories = [
       { name: "A", description: "desc A" },
       { name: "B", description: "desc B" }
@@ -66,14 +66,14 @@ describe("ImportCategoryUseCase (unit)", () => {
     const categories = [{ name: "A", description: "desc A" }];
     jest.spyOn(useCase, "loadCategories").mockResolvedValue(categories);
 
-    // Cria a categoria antes
+    // Create the category beforehand
     await categoriesRepositoryInMemory.create(categories[0]);
 
     const file = { path: "dummy.csv" } as any;
 
     await useCase.execute(file);
 
-    // Garante que não foi criada uma nova categoria
+    // Ensure no new category was created
     const all = await categoriesRepositoryInMemory.list();
     expect(all.length).toBe(1);
   });

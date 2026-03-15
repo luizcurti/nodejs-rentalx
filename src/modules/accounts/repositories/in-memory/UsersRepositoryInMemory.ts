@@ -23,7 +23,7 @@ class UsersRepositoryInMemory implements IUsersRepository {
       password,
       avatar
     });
-    // Garante que sempre haverá um id válido
+    // Ensure there is always a valid id
     if (!id && !user.id) {
       const { v4: uuidV4 } = await import('uuid');
       user.id = uuidV4();

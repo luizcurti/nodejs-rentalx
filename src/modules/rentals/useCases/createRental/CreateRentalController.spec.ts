@@ -23,7 +23,7 @@ describe("CreateRentalController (unit)", () => {
       dateProviderInMemory,
       carsRepositoryInMemory
     );
-    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
+    // Mock container.resolve before creating the controller to support the constructor DI pattern
     jest.spyOn(container, "resolve").mockImplementation((target: any) => {
       if (target === CreateRentalUseCase) {
         return useCase;
@@ -48,7 +48,7 @@ describe("CreateRentalController (unit)", () => {
   }
 
   it("should call use case with correct data and return 201 with rental, using in-memory repo", async () => {
-    // Adiciona carro disponível
+    // Add available car
     await carsRepositoryInMemory.create({
       id: "car1",
       name: "Car Test",
@@ -62,7 +62,7 @@ describe("CreateRentalController (unit)", () => {
 
     const body = {
       car_id: "car1",
-      expected_return_date: new Date(Date.now() + 25 * 60 * 60 * 1000) // 25h depois
+      expected_return_date: new Date(Date.now() + 25 * 60 * 60 * 1000) // 25h later
     };
     const user = { id: "user1" };
     const req = mockRequest(body, user) as Request;
@@ -70,7 +70,7 @@ describe("CreateRentalController (unit)", () => {
 
     await controller.handle(req, res);
 
-    // Verifica se o rental foi criado no repo in-memory
+    // Verify the rental was created in the in-memory repo
     const rentals = await rentalsRepositoryInMemory.findByUser("user1");
     expect(rentals.length).toBe(1);
     expect(rentals[0].car_id).toBe("car1");

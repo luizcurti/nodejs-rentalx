@@ -13,7 +13,7 @@ class CarsImagesRepositoryInMemory implements ICarsImagesRepository {
     return image;
   }
 
-  // Métodos utilitários para testes
+  // Helper methods for tests
   getImagesByCarId(car_id: string): CarImage[] {
     return this.images.filter(img => img.car_id === car_id);
   }

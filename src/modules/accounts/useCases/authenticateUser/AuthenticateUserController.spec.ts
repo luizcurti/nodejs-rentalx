@@ -107,7 +107,7 @@ describe("AuthenticateUserController", () => {
       password: "containerpass",
       name: "Container User",
     });
-    // Mocka o container.resolve antes de criar o controller para evitar erro de DI
+    // Mock container.resolve before creating the controller to prevent DI error
     const resolveSpy = jest.spyOn(container, "resolve").mockImplementation(() => authenticateUserUseCase);
     const controllerNoUseCase = new AuthenticateUserController();
     resolveSpy.mockRestore();

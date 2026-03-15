@@ -16,7 +16,7 @@ describe("ListSpecificationsController", () => {
         { id: "spec2", name: "Spec 2", description: "Desc 2" },
       ]),
     };
-    // Mock container.resolve antes de criar o controller para suportar o padrão constructor DI
+    // Mock container.resolve before creating the controller to support the constructor DI pattern
     jest.spyOn(container, "resolve").mockReturnValue(mockUseCase);
     controller = new ListSpecificationsController();
   });
